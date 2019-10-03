@@ -37,33 +37,37 @@ export default {
   components: {},
   data: () => ({
     ethAccount: null,
-    argAccount: null
+    argAccount: null,
+    web3: null,
+    aergoapi: null,
   }),
   created() {
     // load ethereum web3
     // Modern dapp browsers...
     if (window.ethereum) {
-      web3 = new Web3(ethereum);
+      this.web3 = new Web3(ethereum);
     }
     // Legacy dapp browsers...
     else if (window.web3) {
-      window.web3 = new Web3(web3.currentProvider);
+      this.web3 = new Web3(web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
     }
     // Non-dapp browsers...
     else {
       console.log(
         "Non-Ethereum browser detected. You should consider trying MetaMask!"
       );
-      web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+      this.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
     }
     // set ethereum account change listener
-    web3.currentProvider.publicConfigStore.on("update", account => {
+    this.web3.currentProvider.publicConfigStore.on("update", account => {
       this.ethAccount = account;
+      this.$emit('ethereumlogin', account);
     });
 
     // set aergo account event change listener
     window.addEventListener("AERGO_ACTIVE_ACCOUNT", event => {
       this.argAccount = event.detail.account;
+      this.$emit('aergologin', event.detail.account);
     });
   },
   methods: {

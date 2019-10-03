@@ -1,10 +1,12 @@
+
+
 <template>
   <v-row align="center">
-    <v-expansion-panels focusable>
+    <v-expansion-panels focusable accordion>
       <v-expansion-panel v-for="(item,i) in bridges" :key="i">
         <v-expansion-panel-header>{{item.bridge1.net.label}}({{item.bridge1.asset.label}}) - {{item.bridge2.net.label}}({{item.bridge2.asset.label}})</v-expansion-panel-header>
         <v-expansion-panel-content>
-          <v-container fluid>
+          <v-container fluid class="pa-0">
             <v-row>
               <v-col sm12 md6>
                 <v-card class="mx-auto" min-width="350px"> 
@@ -20,7 +22,7 @@
                           <v-icon>mdi-sack</v-icon>
                           <v-icon large>mdi-bank-transfer-in</v-icon>
                           <br />
-                          <v-btn color="primary" text>
+                          <v-btn color="primary" text @click="$emit('select-operation', 'send', item.bridge1, item.bridge2)">
                             <small>
                               Transfer
                               <br />
@@ -31,7 +33,7 @@
                         <v-col class="px-0">
                           <v-icon large>mdi-weather-cloudy-arrow-right</v-icon>
                           <br />
-                          <v-btn color="primary" text>
+                          <v-btn color="primary" text @click="$emit('select-operation', 'view', item.bridge1, item.bridge2)">
                             <small>
                               View
                               <br />Progress
@@ -42,7 +44,7 @@
                           <v-icon large>mdi-bank-transfer-out</v-icon>
                           <v-icon>mdi-sack</v-icon>
                           <br />
-                          <v-btn color="primary" text>
+                          <v-btn color="primary" text @click="$emit('select-operation', 'receive', item.bridge1, item.bridge2)">
                             <small>
                               Get Swapped
                               <br />
@@ -70,7 +72,7 @@
                           <v-icon>mdi-sack</v-icon>
                           <v-icon large>mdi-bank-transfer-in</v-icon>
                           <br />
-                          <v-btn color="primary" text>
+                          <v-btn color="primary" text @click="$emit('select-operation', 'send', item.bridge2, item.bridge1)">
                             <small>
                               Transfer
                               <br />
@@ -81,7 +83,7 @@
                         <v-col class="px-0">
                           <v-icon large>mdi-weather-cloudy-arrow-right</v-icon>
                           <br />
-                          <v-btn color="primary" text>
+                          <v-btn color="primary" text @click="$emit('select-operation', 'view', item.bridge2, item.bridge1)">
                             <small>
                               View
                               <br />Progress
@@ -92,7 +94,7 @@
                           <v-icon large>mdi-bank-transfer-out</v-icon>
                           <v-icon>mdi-sack</v-icon>
                           <br />
-                          <v-btn color="primary" text>
+                          <v-btn color="primary" text @click="$emit('select-operation', 'receive', item.bridge2, item.bridge1)">
                             <small>
                               Get Swapped
                               <br />
@@ -123,10 +125,12 @@ const assetType = {
   erc20: "erc20",
   arc1: "arc1"
 };
+
+
 const defaultBridges = [
   {
     bridge1: {
-      net: { label: "Aergo testnet", endpoint: "127.0.0.1:3000" },
+      net: { label: "Aergo testnet", type: "aergo", chainid: "testnet.aergo.io", endpoint: "127.0.0.1:3000" },
       contract: { id: "fixmetodo" },
       asset: {
         label: "native aergo",
@@ -136,7 +140,7 @@ const defaultBridges = [
       }
     },
     bridge2: {
-      net: { label: "Ethereum testnet", endpoint: "127.0.0.2:3000" },
+      net: { label: "Ethereum testnet", type: "ethereum", chainid: "0x2", endpoint: "127.0.0.2:3000" },
       contract: { id: "fixmetodo2" },
       asset: {
         label: "erc20 aergo",
@@ -148,7 +152,7 @@ const defaultBridges = [
   },
   {
     bridge1: {
-      net: { label: "Aergo testnet", endpoint: "127.0.0.1:3000" },
+      net: { label: "Aergo testnet", type: "aergo", chainid: "testnet.aergo.io", endpoint: "127.0.0.1:3000" },
       contract: { id: "fixmetodo" },
       asset: {
         label: "arc1 gotchu",
@@ -158,7 +162,7 @@ const defaultBridges = [
       }
     },
     bridge2: {
-      net: { label: "Ethereum testnet", endpoint: "127.0.0.2:3000" },
+      net: { label: "Ethereum testnet", type: "ethereum", chainid: "0x2", endpoint: "127.0.0.2:3000" },
       contract: { id: "fixmetodo2" },
       asset: {
         label: "erc20 gotchu",
@@ -179,7 +183,7 @@ export default {
     bridges: null
   }),
   created() {
-    localStorage.clear(); //FIXME
+    localStorage.clear(); //FIXME remove this
 
     // set initail bridge configuration
     if (localStorage.getItem("_bridges") === null) {
