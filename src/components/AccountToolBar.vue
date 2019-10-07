@@ -61,13 +61,13 @@ export default {
     // set ethereum account change listener
     this.web3.currentProvider.publicConfigStore.on("update", account => {
       this.ethAccount = account;
-      this.$emit('ethereumlogin', account);
+      this.$emit('login_ethereum', account);
     });
 
     // set aergo account event change listener
     window.addEventListener("AERGO_ACTIVE_ACCOUNT", event => {
       this.argAccount = event.detail.account;
-      this.$emit('aergologin', event.detail.account);
+      this.$emit('login_aergo', event.detail.account);
     });
   },
   methods: {

@@ -1,5 +1,4 @@
 
-
 <template>
   <v-row align="center">
     <v-expansion-panels focusable accordion>
@@ -9,8 +8,8 @@
           <v-container fluid class="pa-0">
             <v-row>
               <v-col sm12 md6>
-                <v-card class="mx-auto" min-width="350px"> 
-                  <v-card-text class="pa-1 ">
+                <v-card class="mx-auto" min-width="350px">
+                  <v-card-text class="pa-1">
                     <span class="text--primary">
                       {{item.bridge1.net.label}}
                       <v-icon>mdi-arrow-right</v-icon>
@@ -22,9 +21,13 @@
                           <v-icon>mdi-sack</v-icon>
                           <v-icon large>mdi-bank-transfer-in</v-icon>
                           <br />
-                          <v-btn color="primary" text @click="$emit('select-operation', 'send', item.bridge1, item.bridge2)">
+                          <v-btn
+                            color="primary"
+                            text
+                            @click="$emit('update_bridge', item.bridge1, item.bridge2); $emit('stepping', 'next');"
+                          >
                             <small>
-                              Transfer
+                              1. {{getOpType('in', item.bridge1)}}
                               <br />
                               {{item.bridge1.asset.label}}
                             </small>
@@ -33,10 +36,14 @@
                         <v-col class="px-0">
                           <v-icon large>mdi-weather-cloudy-arrow-right</v-icon>
                           <br />
-                          <v-btn color="primary" text @click="$emit('select-operation', 'view', item.bridge1, item.bridge2)">
+                          <v-btn
+                            color="primary"
+                            text
+                            @click="$emit('update_bridge', item.bridge1, item.bridge2); $emit('stepping', 4);"
+                          >
                             <small>
-                              View
-                              <br />Progress
+                              2. Wait
+                              <br />Validation
                             </small>
                           </v-btn>
                         </v-col>
@@ -44,9 +51,13 @@
                           <v-icon large>mdi-bank-transfer-out</v-icon>
                           <v-icon>mdi-sack</v-icon>
                           <br />
-                          <v-btn color="primary" text @click="$emit('select-operation', 'receive', item.bridge1, item.bridge2)">
+                          <v-btn
+                            color="primary"
+                            text
+                            @click="$emit('update_bridge', item.bridge1, item.bridge2); $emit('stepping', 4);"
+                          >
                             <small>
-                              Get Swapped
+                              3. {{getOpType('out', item.bridge2)}}
                               <br />
                               {{item.bridge2.asset.label}}
                             </small>
@@ -72,9 +83,13 @@
                           <v-icon>mdi-sack</v-icon>
                           <v-icon large>mdi-bank-transfer-in</v-icon>
                           <br />
-                          <v-btn color="primary" text @click="$emit('select-operation', 'send', item.bridge2, item.bridge1)">
+                          <v-btn
+                            color="primary"
+                            text
+                            @click="$emit('update_bridge', item.bridge2, item.bridge1); $emit('stepping', 'next');"
+                          >
                             <small>
-                              Transfer
+                              1. {{getOpType('in', item.bridge2)}}
                               <br />
                               {{item.bridge2.asset.label}}
                             </small>
@@ -83,10 +98,14 @@
                         <v-col class="px-0">
                           <v-icon large>mdi-weather-cloudy-arrow-right</v-icon>
                           <br />
-                          <v-btn color="primary" text @click="$emit('select-operation', 'view', item.bridge2, item.bridge1)">
+                          <v-btn
+                            color="primary"
+                            text
+                            @click="$emit('update_bridge', item.bridge2, item.bridge1); $emit('stepping', 4);"
+                          >
                             <small>
-                              View
-                              <br />Progress
+                              2. Wait
+                              <br />Validation
                             </small>
                           </v-btn>
                         </v-col>
@@ -94,9 +113,13 @@
                           <v-icon large>mdi-bank-transfer-out</v-icon>
                           <v-icon>mdi-sack</v-icon>
                           <br />
-                          <v-btn color="primary" text @click="$emit('select-operation', 'receive', item.bridge2, item.bridge1)">
+                          <v-btn
+                            color="primary"
+                            text
+                            @click="$emit('update_bridge', item.bridge2, item.bridge1); $emit('stepping', 4);"
+                          >
                             <small>
-                              Get Swapped
+                              3. {{getOpType('out', item.bridge1)}}
                               <br />
                               {{item.bridge1.asset.label}}
                             </small>
@@ -126,11 +149,15 @@ const assetType = {
   arc1: "arc1"
 };
 
-
 const defaultBridges = [
   {
     bridge1: {
-      net: { label: "Aergo testnet", type: "aergo", chainid: "testnet.aergo.io", endpoint: "127.0.0.1:3000" },
+      net: {
+        label: "Aergo testnet",
+        type: "aergo",
+        chainId: "testnet.aergo.io",
+        endpoint: "127.0.0.1:3000"
+      },
       contract: { id: "fixmetodo" },
       asset: {
         label: "native aergo",
@@ -140,7 +167,12 @@ const defaultBridges = [
       }
     },
     bridge2: {
-      net: { label: "Ethereum testnet", type: "ethereum", chainid: "0x2", endpoint: "127.0.0.2:3000" },
+      net: {
+        label: "Ethereum testnet",
+        type: "ethereum",
+        chainId: "0x3",
+        endpoint: "127.0.0.2:3000"
+      },
       contract: { id: "fixmetodo2" },
       asset: {
         label: "erc20 aergo",
@@ -152,7 +184,12 @@ const defaultBridges = [
   },
   {
     bridge1: {
-      net: { label: "Aergo testnet", type: "aergo", chainid: "testnet.aergo.io", endpoint: "127.0.0.1:3000" },
+      net: {
+        label: "Aergo testnet",
+        type: "aergo",
+        chainId: "testnet.aergo.io",
+        endpoint: "127.0.0.1:3000"
+      },
       contract: { id: "fixmetodo" },
       asset: {
         label: "arc1 gotchu",
@@ -162,7 +199,12 @@ const defaultBridges = [
       }
     },
     bridge2: {
-      net: { label: "Ethereum testnet", type: "ethereum", chainid: "0x2", endpoint: "127.0.0.2:3000" },
+      net: {
+        label: "Ethereum testnet",
+        type: "ethereum",
+        chainId: "0x3",
+        endpoint: "127.0.0.2:3000"
+      },
       contract: { id: "fixmetodo2" },
       asset: {
         label: "erc20 gotchu",
@@ -190,6 +232,46 @@ export default {
       localStorage.setItem("_bridges", JSON.stringify(defaultBridges));
     }
     this.bridges = JSON.parse(localStorage.getItem("_bridges"));
+  },
+  methods: {
+    getOpType(inOut, bridge) {
+      if (inOut === "in") {
+        if (
+          bridge.asset.type === assetType.erc20 ||
+          bridge.asset.type === assetType.arc1
+        ) {
+          if (bridge.asset.isPegged === true) {
+            return "burn";
+          } else {
+            return "lock";
+          }
+        } else if (bridge.asset.type === assetType.native) {
+          return "freeze";
+        } else {
+          /* eslint-disable no-console */
+          console.log("unsuppored asset type", bridge.asset.type);
+        }
+      } else if (inOut === "out") {
+        if (
+          bridge.asset.type === assetType.erc20 ||
+          bridge.asset.type === assetType.arc1
+        ) {
+          if (bridge.asset.isPegged === true) {
+            return "mint";
+          } else {
+            return "unlock";
+          }
+        } else if (bridge.asset.type === assetType.native) {
+          return "unfreeze";
+        } else {
+          /* eslint-disable no-console */
+          console.log("unsuppored asset type", bridge.asset.type);
+        }
+      } else {
+        /* eslint-disable no-console */
+        console.log("unsuppored inOut value", inOut);
+      }
+    }
   }
 };
 </script>
