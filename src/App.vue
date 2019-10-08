@@ -32,22 +32,21 @@
             <SendForm v-bind:bridge="fromBridge" @stepping="stepping"/>
           </v-stepper-content>
 
-          <v-stepper-step :complete="step > 4" step="4">Login to wallet (receiving network)</v-stepper-step>
+          <v-stepper-step :complete="step > 4" step="4">Wating a validation</v-stepper-step>
           <v-stepper-content step="4">
+             <History />
+            <br />
+            
+          </v-stepper-content>
+
+          <v-stepper-step :complete="step > 5" step="5">Login to wallet (receiving network)</v-stepper-step>
+          <v-stepper-content step="5">
             <AccountLogin
               v-bind:bridge="toBridge"
               v-bind:etheraccount="etheraccount"
               v-bind:aergoaccount="aergoaccount"
               @stepping="stepping"
             />
-          </v-stepper-content>
-
-          <v-stepper-step :complete="step > 5" step="5">Wating a validation</v-stepper-step>
-          <v-stepper-content step="5">
-            TODO
-            <br />
-            <v-btn color="primary" @click="step = 5">Next</v-btn>
-            <v-btn text @click="step = 4">Back</v-btn>
           </v-stepper-content>
 
           <v-stepper-step :complete="step > 6" step="6">Receive the asset</v-stepper-step>
@@ -67,6 +66,7 @@ import AccountToolBar from "./components/AccountToolBar";
 import BridgeSelect from "./components/BridgeSelect";
 import AccountLogin from "./components/AccountLogin";
 import SendForm from "./components/Send";
+import History from "./components/History";
 
 export default {
   name: "App",
@@ -74,7 +74,8 @@ export default {
     AccountToolBar,
     BridgeSelect,
     AccountLogin,
-    SendForm
+    SendForm,
+    History
   },
   data: () => ({
     step: 1,
