@@ -32,9 +32,9 @@
             <SendForm v-bind:bridge="fromBridge" @stepping="stepping"/>
           </v-stepper-content>
 
-          <v-stepper-step :complete="step > 4" step="4">Wating a validation</v-stepper-step>
+          <v-stepper-step :complete="step > 4" step="4">Wating a verification</v-stepper-step>
           <v-stepper-content step="4">
-             <History />
+             <Status @stepping="stepping" />
             <br />
             
           </v-stepper-content>
@@ -51,11 +51,11 @@
 
           <v-stepper-step :complete="step > 6" step="6">Receive the asset</v-stepper-step>
           <v-stepper-content step="6">
-            TODO
-            <br />
-            <v-btn color="primary" @click="step = 1">Done</v-btn>
+            <ReceiveForm v-bind:bridge="toBridge" @stepping="stepping"/>
+            
           </v-stepper-content>
         </v-stepper>
+        <History />
       </v-content>
     </v-app>
   </div>
@@ -66,6 +66,8 @@ import AccountToolBar from "./components/AccountToolBar";
 import BridgeSelect from "./components/BridgeSelect";
 import AccountLogin from "./components/AccountLogin";
 import SendForm from "./components/Send";
+import ReceiveForm from "./components/Receive";
+import Status from "./components/Status";
 import History from "./components/History";
 
 export default {
@@ -75,6 +77,8 @@ export default {
     BridgeSelect,
     AccountLogin,
     SendForm,
+    Status,
+    ReceiveForm,
     History
   },
   data: () => ({
