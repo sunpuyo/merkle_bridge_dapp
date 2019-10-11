@@ -10,12 +10,31 @@
               <v-col sm12 md6>
                 <v-card class="mx-auto" min-width="350px">
                   <v-card-text class="pa-1">
-                    <span class="text--primary">
-                      {{item.bridge1.net.label}}
-                      <v-icon>mdi-arrow-right</v-icon>
-                      {{item.bridge2.net.label}}
-                    </span>
                     <v-container fluid pa-0>
+                      <v-row>
+                        <v-col class="py-0">
+                          <v-btn text @click="showFromMeta=!showFromMeta">
+                            {{item.bridge1.net.label}}
+                            <v-icon small>mdi-arrow-right</v-icon>
+                            {{item.bridge2.net.label}}
+                            <v-icon>mdi-menu-down</v-icon>
+                          </v-btn>
+                        </v-col>
+                      </v-row>
+                      <v-row>
+                        <v-col class="py-0">
+                          <p v-show="showFromMeta === true" align="left" class="px-5">
+                            From Asset:
+                            <a>{{item.bridge1.asset.id}}</a>
+                            <br />From Bridge:
+                            <a>{{item.bridge1.contract.id}}</a>
+                            <br />To Asset:
+                            <a>{{item.bridge2.asset.id}}</a>
+                            <br />To Bridge:
+                            <a>{{item.bridge2.contract.id}}</a>
+                          </p>
+                        </v-col>
+                      </v-row>
                       <v-row>
                         <v-col class="px-0">
                           <v-icon>mdi-sack</v-icon>
@@ -24,7 +43,7 @@
                           <v-btn
                             color="primary"
                             text
-                            @click="$emit('update_bridge', item.bridge1, item.bridge2); $emit('stepping', 'next');"
+                            @click="$emit('update_bridge', item.bridge1, getOpType('in', item.bridge1), item.bridge2, getOpType('out', item.bridge2)); $emit('stepping', 'next');"
                           >
                             <small>
                               1. {{getOpType('in', item.bridge1)}}
@@ -39,7 +58,7 @@
                           <v-btn
                             color="primary"
                             text
-                            @click="$emit('update_bridge', item.bridge1, item.bridge2); $emit('stepping', 4);"
+                            @click="$emit('update_bridge', item.bridge1, getOpType('in', item.bridge1), item.bridge2, getOpType('out', item.bridge2)); $emit('stepping', 3);"
                           >
                             <small>
                               2. Wait
@@ -54,7 +73,7 @@
                           <v-btn
                             color="primary"
                             text
-                            @click="$emit('update_bridge', item.bridge1, item.bridge2); $emit('stepping', 4);"
+                            @click="$emit('update_bridge', item.bridge1, getOpType('in', item.bridge1), item.bridge2, getOpType('out', item.bridge2)); $emit('stepping', 3);"
                           >
                             <small>
                               3. {{getOpType('out', item.bridge2)}}
@@ -72,11 +91,31 @@
               <v-col xs12 sm6>
                 <v-card class="mx-auto" min-width="350px">
                   <v-card-text class="pa-1">
-                    <span class="text--primary">
-                      {{item.bridge2.net.label}}
-                      <v-icon>mdi-arrow-right</v-icon>
-                      {{item.bridge1.net.label}}
-                    </span>
+                    <v-row>
+                      <v-col class="py-0">
+                        <v-btn text @click="showToMeta=!showToMeta">
+                          {{item.bridge2.net.label}}
+                          <v-icon small>mdi-arrow-right</v-icon>
+                          {{item.bridge1.net.label}}
+                          <v-icon>mdi-menu-down</v-icon>
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col class="py-0">
+                        <p v-show="showToMeta === true" align="left" class="px-5">
+                          From Asset:
+                          <a>{{item.bridge2.asset.id}}</a>
+                          <br />From Bridge:
+                          <a>{{item.bridge2.contract.id}}</a>
+                          <br />To Asset:
+                          <a>{{item.bridge1.asset.id}}</a>
+                          <br />To Bridge:
+                          <a>{{item.bridge1.contract.id}}</a>
+                        </p>
+                      </v-col>
+                    </v-row>
+
                     <v-container fluid class="pa-0">
                       <v-row>
                         <v-col class="px-0">
@@ -86,7 +125,7 @@
                           <v-btn
                             color="primary"
                             text
-                            @click="$emit('update_bridge', item.bridge2, item.bridge1); $emit('stepping', 'next');"
+                            @click="$emit('update_bridge', item.bridge2, getOpType('in', item.bridge2), item.bridge1, getOpType('out', item.bridge1)); $emit('stepping', 'next');"
                           >
                             <small>
                               1. {{getOpType('in', item.bridge2)}}
@@ -101,7 +140,7 @@
                           <v-btn
                             color="primary"
                             text
-                            @click="$emit('update_bridge', item.bridge2, item.bridge1); $emit('stepping', 4);"
+                            @click="$emit('update_bridge', item.bridge2, getOpType('in', item.bridge2), item.bridge1, getOpType('out', item.bridge1)); $emit('stepping', 3);"
                           >
                             <small>
                               2. Wait
@@ -116,7 +155,7 @@
                           <v-btn
                             color="primary"
                             text
-                            @click="$emit('update_bridge', item.bridge2, item.bridge1); $emit('stepping', 4);"
+                            @click="$emit('update_bridge', item.bridge2, getOpType('in', item.bridge2), item.bridge1, getOpType('out', item.bridge1)); $emit('stepping', 3);"
                           >
                             <small>
                               3. {{getOpType('out', item.bridge1)}}
@@ -156,14 +195,15 @@ const defaultBridges = [
         label: "Aergo testnet",
         type: "aergo",
         chainId: "testnet.aergo.io",
-        endpoint: "127.0.0.1:3000"
+        endpoint: "127.0.0.1:3000",
+        scan: "https://testnet.aergoscan.io/account/"
       },
-      contract: { id: "fixmetodo" },
+      contract: { id: "AmfzMkaFchxxqg39mcSMkj1rnnBtUZUipDhLBi2H3ewDReJjzLGz" },
       asset: {
         label: "native aergo",
         type: assetType.native,
         isPegged: false,
-        contractId: "addresTODO"
+        id: ""
       }
     },
     bridge2: {
@@ -171,14 +211,15 @@ const defaultBridges = [
         label: "Ethereum testnet",
         type: "ethereum",
         chainId: "0x3",
-        endpoint: "127.0.0.2:3000"
+        endpoint: "127.0.0.2:3000",
+        scan: "https://ropsten.etherscan.io/address/"
       },
-      contract: { id: "fixmetodo2" },
+      contract: { id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9" },
       asset: {
         label: "erc20 aergo",
         type: assetType.erc20,
         isPegged: false,
-        contractId: "addresTODO2"
+        id: "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e"
       }
     }
   },
@@ -188,14 +229,15 @@ const defaultBridges = [
         label: "Aergo testnet",
         type: "aergo",
         chainId: "testnet.aergo.io",
-        endpoint: "127.0.0.1:3000"
+        endpoint: "127.0.0.1:3000",
+        scan: "https://testnet.aergoscan.io/account/"
       },
-      contract: { id: "fixmetodo" },
+      contract: { id: "AmfzMkaFchxxqg39mcSMkj1rnnBtUZUipDhLBi2H3ewDReJjzLGz" },
       asset: {
         label: "arc1 gotchu",
         type: assetType.arc1,
         isPegged: true,
-        contractId: "addresTODO"
+        id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9"
       }
     },
     bridge2: {
@@ -203,14 +245,15 @@ const defaultBridges = [
         label: "Ethereum testnet",
         type: "ethereum",
         chainId: "0x3",
-        endpoint: "127.0.0.2:3000"
+        endpoint: "127.0.0.2:3000",
+        scan: "https://ropsten.etherscan.io/address/"
       },
-      contract: { id: "fixmetodo2" },
+      contract: { id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9" },
       asset: {
         label: "erc20 gotchu",
         type: assetType.erc20,
         isPegged: false,
-        contractId: "addresTODO2"
+        id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9"
       }
     }
   }
@@ -222,7 +265,9 @@ export default {
     //
   },
   data: () => ({
-    bridges: null
+    bridges: null,
+    showFromMeta: false,
+    showToMeta: false
   }),
   created() {
     localStorage.clear(); //FIXME remove this

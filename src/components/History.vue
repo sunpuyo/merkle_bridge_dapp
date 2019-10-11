@@ -1,5 +1,6 @@
 <template>
   <div>
+    SHOW ME
     <v-container fluid class="pa-0">
       <v-data-iterator
         :items="txs"
@@ -31,11 +32,11 @@
                     <v-icon left>mdi-check</v-icon>{{ item.status }}
                   </span>
 
-                  <span v-if="item.status === 'validated'">
+                  <span v-if="item.status === 'verified'">
                       <v-icon left>mdi-cloud-check</v-icon>
                       {{ item.status }}
                   </span>
-                  <span v-if="item.status === 'onproof'">
+                  <span v-if="item.status === 'on verifying'">
                       <v-icon left>mdi-cloud-sync</v-icon>
                       {{ item.status }}
                   </span>
@@ -91,7 +92,7 @@ export default {
     loading: false,
     txs: [
       {
-        status: "onproof",
+        status: "on verifying",
         sendTxs: [
           {
             sendTxId:
@@ -112,7 +113,7 @@ export default {
         amount: "0.04895"
       },
       {
-        status: "validated",
+        status: "verified",
         sendTxs: [
           {
             sendTxId:

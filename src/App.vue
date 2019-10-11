@@ -1,9 +1,25 @@
 <template>
   <div id="app">
     <v-app>
+      <!-- navigation menu -->
+      <v-navigation-drawer v-model="drawer" absolute temporary>
+        <v-list-item @click="step=1; menu='transfer'; drawer=false;">
+          <v-list-item-avatar>
+            <v-icon large>mdi-bank-transfer-in</v-icon>
+          </v-list-item-avatar>
+          <v-list-item-content>Transfer Asset</v-list-item-content>
+        </v-list-item>
+        <v-list-item @click="step=1; menu='navigate'; drawer=false;">
+          <v-list-item-avatar>
+            <v-icon large>mdi-search-web</v-icon>
+          </v-list-item-avatar>
+          <v-list-item-content>Navigate</v-list-item-content>
+        </v-list-item>
+      </v-navigation-drawer>
       <AccountToolBar
         @login_ethereum="login_ethereum"
         @login_aergo="login_aergo"
+        @open_drawer="open_drawer"
         @stepping="stepping"
       />
       <v-content class="pa-0">
@@ -12,50 +28,47 @@
             Select a bridge
             <small>Summarize if needed</small>
           </v-stepper-step>
-
           <v-stepper-content step="1">
             <BridgeSelect @update_bridge="update_bridge" @stepping="stepping" />
           </v-stepper-content>
 
-          <v-stepper-step :complete="step > 2" step="2">Login to wallet (sending network)</v-stepper-step>
-          <v-stepper-content step="2">
-            <AccountLogin
-              v-bind:bridge="fromBridge"
-              v-bind:etheraccount="etheraccount"
-              v-bind:aergoaccount="aergoaccount"
-              @stepping="stepping"
-            />
-          </v-stepper-content>
+          <div v-if="menu==='transfer'">
+            <v-stepper-step :complete="step > 2" step="2">Send an asset</v-stepper-step>
+            <v-stepper-content step="2">
+              <Form
+                v-bind:bridge="fromBridge"
+                v-bind:optype="fromOpType"
+                v-bind:etheraccount="etheraccount"
+                v-bind:aergoaccount="aergoaccount"
+                @stepping="stepping"
+              />
+            </v-stepper-content>
 
-          <v-stepper-step :complete="step > 3" step="3">Send an asset</v-stepper-step>
-          <v-stepper-content step="3">
-            <SendForm v-bind:bridge="fromBridge" @stepping="stepping"/>
-          </v-stepper-content>
+            <v-stepper-step :complete="step > 3" step="3">Wating a verification</v-stepper-step>
+            <v-stepper-content step="3">
+              <Status @stepping="stepping" />
+              <br />
+            </v-stepper-content>
 
-          <v-stepper-step :complete="step > 4" step="4">Wating a verification</v-stepper-step>
-          <v-stepper-content step="4">
-             <Status @stepping="stepping" />
-            <br />
-            
-          </v-stepper-content>
+            <v-stepper-step :complete="step > 4" step="4">Receive the asset</v-stepper-step>
+            <v-stepper-content step="4">
+              <Form
+                v-bind:bridge="toBridge"
+                v-bind:optype="toOpType"
+                v-bind:etheraccount="etheraccount"
+                v-bind:aergoaccount="aergoaccount"
+                @stepping="stepping"
+              />
+            </v-stepper-content>
+          </div>
 
-          <v-stepper-step :complete="step > 5" step="5">Login to wallet (receiving network)</v-stepper-step>
-          <v-stepper-content step="5">
-            <AccountLogin
-              v-bind:bridge="toBridge"
-              v-bind:etheraccount="etheraccount"
-              v-bind:aergoaccount="aergoaccount"
-              @stepping="stepping"
-            />
-          </v-stepper-content>
-
-          <v-stepper-step :complete="step > 6" step="6">Receive the asset</v-stepper-step>
-          <v-stepper-content step="6">
-            <ReceiveForm v-bind:bridge="toBridge" @stepping="stepping"/>
-            
-          </v-stepper-content>
+          <div v-else-if="menu==='navigate'">
+            <v-stepper-step :complete="step > 2" step="2">Navigate asset transfers</v-stepper-step>
+            <v-stepper-content step="2">
+              <History />dfdfd
+            </v-stepper-content>
+          </div>
         </v-stepper>
-        <History />
       </v-content>
     </v-app>
   </div>
@@ -64,9 +77,7 @@
 <script>
 import AccountToolBar from "./components/AccountToolBar";
 import BridgeSelect from "./components/BridgeSelect";
-import AccountLogin from "./components/AccountLogin";
-import SendForm from "./components/Send";
-import ReceiveForm from "./components/Receive";
+import Form from "./components/Form";
 import Status from "./components/Status";
 import History from "./components/History";
 
@@ -75,18 +86,21 @@ export default {
   components: {
     AccountToolBar,
     BridgeSelect,
-    AccountLogin,
-    SendForm,
     Status,
-    ReceiveForm,
+    Form,
     History
   },
   data: () => ({
     step: 1,
+    drawer: null,
+    menu: "transfer",
     fromBridge: null,
     toBridge: null,
-    etheraccount: "x",
-    aergoaccount: "y"
+    fromOpType: null,
+    toOpType: null,
+    etheraccount: null,
+    aergoaccount: null,
+    web3: null
   }),
   methods: {
     login_ethereum(etheraccount) {
@@ -95,9 +109,14 @@ export default {
     login_aergo(aergoaccount) {
       this.aergoaccount = aergoaccount;
     },
-    update_bridge(fromBridge, toBridge) {
+    open_drawer() {
+      this.drawer = !this.drawer;
+    },
+    update_bridge(fromBridge, fromOpType, toBridge, toOpType) {
       this.fromBridge = fromBridge;
       this.toBridge = toBridge;
+      this.fromOpType = fromOpType;
+      this.toOpType = toOpType;
     },
     stepping(step) {
       if (step === "next") {

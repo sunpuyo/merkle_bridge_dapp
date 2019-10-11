@@ -52,15 +52,15 @@ export default {
             return "login";
           }
           return "loginDiffChainId";
-        } else if (
-          this.bridge.net.type === "ethereum" &&
-          this.etheraccount &&
-          this.etheraccount.selectedAddress
-        ) {
-          if (this.etheraccount.chainId === this.bridge.net.chainId) {
-            return "login";
+        } else if (this.bridge.net.type === "ethereum" && this.etheraccount) {
+          if (this.etheraccount.selectedAddress) {
+            if (this.etheraccount.chainId === this.bridge.net.chainId) {
+              return "login";
+            }
+            return "loginDiffChainId";
+          } else {
+            return "lock";
           }
-          return "loginDiffChainId";
         }
       }
       return "logout";
