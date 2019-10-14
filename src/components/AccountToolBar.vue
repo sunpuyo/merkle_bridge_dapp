@@ -87,11 +87,7 @@
   </div>
 </template>
 
-
 <script>
-//web3.currentProvider.publicConfigStore.on('update', callback);
-// if account.selectedAddress is null, go to account configuration -> connection  -> allow local host
-
 export default {
   name: "AccountToolBar",
   components: {},

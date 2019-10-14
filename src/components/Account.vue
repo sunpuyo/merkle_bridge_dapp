@@ -56,77 +56,8 @@ export default {
       }
     }
   }
-  /*
-    account: function() {
-      if (this.bridge) {
-        if (this.bridge.net.type === "aergo" && this.aergoaccount) {
-          if (this.aergoaccount.chainId === this.bridge.net.chainId) {
-            this.$emit(
-              "accountchanged",
-              this.aergoaccount.address,
-              "login",
-              this.aergoaccount.address
-            );
-            return;
-          }
-          this.$emit(
-            "accountchanged",
-            this.aergoaccount.address,
-            "loginDiffChainId",
-            "The account's chainId is different with the bridge's."
-          );
-          return;
-        } else if (this.bridge.net.type === "ethereum" && this.etheraccount) {
-          if (this.etheraccount.selectedAddress) {
-            if (this.etheraccount.chainId === this.bridge.net.chainId) {
-              this.$emit(
-                "accountchanged",
-                this.etheraccount.selectedAddress,
-                "login",
-                this.etheraccount.selectedAddress
-              );
-              return;
-            }
-            this.$emit(
-              "accountchanged",
-              this.etheraccount.selectedAddress,
-              "loginDiffChainId",
-              "The account's chainId is different with the bridge's."
-            );
-            return;
-          } else {
-            this.$emit(
-              "accountchanged",
-              "",
-              "lock",
-              "Click metamask icon at toolbar to connect this DApp"
-            );
-            return;
-          }
-        } else {
-          // logged out
-          if (this.bridge.net.type === "aergo") {
-            this.$emit(
-              "accountchanged",
-              "",
-              "logout",
-              "Login to aergo connect"
-            );
-            return;
-          } else {
-            this.$emit("accountchanged", "", "logout", "Login to Metamask");
-            return;
-          }
-        }
-      } else {
-        this.$emit("accountchanged", "", "logout", "");
-        return;
-      }
-    }
-  }*/
 };
 </script>
 
 <style>
 </style>
-

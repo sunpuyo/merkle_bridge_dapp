@@ -29,7 +29,7 @@
             <small>Summarize if needed</small>
           </v-stepper-step>
           <v-stepper-content step="1">
-            <BridgeSelect @update_bridge="update_bridge" @stepping="stepping" />
+            <BridgeSelect @select_bridge="select_bridge" @stepping="stepping" />
           </v-stepper-content>
 
           <div v-if="menu==='transfer'">
@@ -46,7 +46,7 @@
 
             <v-stepper-step :complete="step > 3" step="3">Wating a verification</v-stepper-step>
             <v-stepper-content step="3">
-              <Status @stepping="stepping" />
+              <Status @stepping="stepping" @update_finalize_info="update_finalize_info" />
               <br />
             </v-stepper-content>
 
@@ -57,6 +57,8 @@
                 v-bind:optype="toOpType"
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
+                v-bind:verifiedReceiver="verifiedReceiver"
+                v-bind:verifiedAmount="verifiedAmount"
                 @stepping="stepping"
               />
             </v-stepper-content>
@@ -65,7 +67,7 @@
           <div v-else-if="menu==='navigate'">
             <v-stepper-step :complete="step > 2" step="2">Navigate asset transfers</v-stepper-step>
             <v-stepper-content step="2">
-              <History />dfdfd
+              <History />
             </v-stepper-content>
           </div>
         </v-stepper>
@@ -98,6 +100,8 @@ export default {
     toBridge: null,
     fromOpType: null,
     toOpType: null,
+    verifiedReceiver: "",
+    verifiedAmount: 0,
     etheraccount: null,
     aergoaccount: null,
     web3: null
@@ -112,11 +116,15 @@ export default {
     open_drawer() {
       this.drawer = !this.drawer;
     },
-    update_bridge(fromBridge, fromOpType, toBridge, toOpType) {
+    select_bridge(fromBridge, fromOpType, toBridge, toOpType) {
       this.fromBridge = fromBridge;
       this.toBridge = toBridge;
       this.fromOpType = fromOpType;
       this.toOpType = toOpType;
+    },
+    update_finalize_info(verifiedReceiver, verifiedAmount) {
+      this.verifiedReceiver = verifiedReceiver;
+      this.verifiedAmount = verifiedAmount;
     },
     stepping(step) {
       if (step === "next") {
