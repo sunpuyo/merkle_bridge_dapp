@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import { assetType } from "./Constants";
+import { assetType } from "./Commons";
 
 export default {
   name: "BridgeCard",

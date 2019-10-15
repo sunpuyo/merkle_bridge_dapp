@@ -3,7 +3,7 @@
     <v-form ref="form" v-model="valid" lazy-validation>
       <v-text-field
         v-model="receiver"
-        :rules="receiverRules"
+        :rules="[validateReceiver]"
         prepend-inner-icon="mdi-account"
         label="To Address"
         required
@@ -48,36 +48,46 @@
         </v-row>
       </v-container>
 
-      <v-btn
-        color="primary"
-        :disabled="valid === false"
-        @click="clickNext"
-      >Continue</v-btn>
-      <v-btn text @click="$emit('stepping', 1);">Back</v-btn>
+      <v-btn color="primary" :disabled="valid === false" @click="clickNext">Continue</v-btn>
+      <v-btn text @click="clickBack">Back</v-btn>
     </v-form>
   </div>
 </template>
 
 <script>
+import { validateAddress } from "./Commons";
+
 export default {
   name: "Status",
   components: {
     //
   },
+  props: ["fromBridge", "toBridge"],
   data: () => ({
     receiver: "",
-    receiverRules: [
-      v => !!v || "Address is required",
-    ],
+    receiverRules: [v => !!v || "Address is required"],
     valid: false,
-    verifiedAmount: 100000,
+    verifiedAmount: 100000
   }),
-   methods: {
+  methods: {
     clickNext() {
-      this.$emit('update_finalize_info', this.receiver, this.verifiedAmount);
-      this.$emit('stepping', 'next');
+      if (this.$refs.form.validate()) {
+        this.$emit("update_finalize_info", this.receiver, this.verifiedAmount);
+        this.$emit("stepping", "next");
+      }
+    },
+    clickBack() {
+      this.$refs.form.resetValidation();
+      this.$emit("stepping", 1);
+    },
+    validateReceiver(v) {
+      if (!v) {
+        return "Address is required";
+      } else {
+        return validateAddress(this.fromBridge.net.type, v);
+      }
     }
-   }
+  }
 };
 </script>
 

@@ -75,6 +75,50 @@ export const defaultBridges = [
     }
   }
 ];
-export default {
+
+import { Address } from "@herajs/client";
+import Web3 from "web3";
+
+var web3local;
+
+// load ethereum web3
+// Modern dapp browsers...
+if (window.ethereum) {
+  web3local = new Web3(ethereum);
 }
+// Legacy dapp browsers...
+else if (window.web3) {
+  web3local = new Web3(web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
+}
+// Non-dapp browsers...
+else {
+  /* eslint-disable no-console */
+  console.error("no metamask");
+  web3local = new Web3(
+    new Web3.providers.HttpProvider("http://localhost:8545")
+  );
+}
+
+export const web3 = web3local;
+
+export function validateAddress(netType, address) {
+  if (netType == "aergo") {
+    try {
+      var addr = new Address(address);
+      return true; // no error
+    } catch (error) {
+      return error.message;
+    }
+  } else if (netType == "ethereum") {
+    try {
+      web3.utils.toChecksumAddress(address);
+      return true; // no error
+    } catch (error) {
+      return error.message;
+    }
+  }
+  return "unknown network type " + netType;
+}
+
+export default {};
 </script>

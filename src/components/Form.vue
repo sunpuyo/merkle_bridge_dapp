@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <v-list v-if="bridge" dense>
+  <div v-if="bridge">
+    <v-list dense>
       <v-list-item class="pa-0">
         <v-list-item-icon class="mr-2">
           <v-icon>mdi-sack</v-icon>
@@ -60,8 +60,7 @@
       <div v-if="inout === 'in'">
         <v-text-field
           v-model="receiver"
-          :counter="10"
-          :rules="receiverRules"
+          :rules="[validateReceiver]"
           label="To Address"
           required
           clearable
@@ -74,8 +73,7 @@
         <!-- receiver and amount are fixed at finalization -->
         <v-text-field
           v-model="verifiedReceiver"
-          :counter="10"
-          :rules="receiverRules"
+          :rules="[validateReceiver]"
           label="To Address"
           required
           disabled
@@ -103,6 +101,7 @@
 <script>
 //:disabled="inout==='out'"
 import Account from "./Account";
+import { validateAddress } from "./Commons";
 
 export default {
   name: "Form",
@@ -119,11 +118,7 @@ export default {
     valid: false,
     isLogin: false,
     receiver: "",
-    receiverRules: [
-      v => !!v || "Address is required",
-      v => (v && v.length <= 10) || "Name must be less than 10 characters"
-    ],
-    amount: '',
+    amount: "",
     amountRules: [],
     nextVerify: 100,
     nextVerifyRules: []
@@ -147,9 +142,24 @@ export default {
       }
     }
   },
+
   methods: {
     checklogin(isLoggedIn) {
       this.isLogin = isLoggedIn;
+    },
+    validate() {
+      if (this.$refs.form.validate()) {
+        this.valid = true;
+      } else {
+        this.valid = false;
+      }
+    },
+    validateReceiver(v) {
+      if (!v) {
+        return "Address is required";
+      } else {
+        return validateAddress(this.bridge.net.type, v);
+      }
     }
   }
 };

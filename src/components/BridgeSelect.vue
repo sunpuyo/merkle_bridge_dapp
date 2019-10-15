@@ -27,14 +27,14 @@
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-header>( ... or Add/Remove Custom Bridge)</v-expansion-panel-header>
-        <v-expansion-panel-content>add/remove bridge button</v-expansion-panel-content>
+        <v-expansion-panel-content>TODO add/remove bridge</v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
   </v-row>
 </template>
 
 <script>
-import {defaultBridges} from './Constants'
+import {defaultBridges} from './Commons'
 
 
 import BridgeCard from "./BridgeCard";

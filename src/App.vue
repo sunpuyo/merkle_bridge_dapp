@@ -23,10 +23,12 @@
         @stepping="stepping"
       />
       <v-content class="pa-0">
+        최상단에 뭔가 머클브릿지에 대한 간략한 설명과 사용법을 적어야 할거 같다.
+        아니면 다른 상세 메인 페이지를 탭으로 제공하는 것도 방법일듯.
         <v-stepper v-model="step" vertical>
           <v-stepper-step :complete="step > 1" step="1">
             Select a bridge
-            <small>Summarize if needed</small>
+            <small>TODO Summarize if needed</small>
           </v-stepper-step>
           <v-stepper-content step="1">
             <BridgeSelect @select_bridge="select_bridge" @stepping="stepping" />
@@ -46,7 +48,12 @@
 
             <v-stepper-step :complete="step > 3" step="3">Wating a verification</v-stepper-step>
             <v-stepper-content step="3">
-              <Status @stepping="stepping" @update_finalize_info="update_finalize_info" />
+              <Status
+                v-bind:toBridge="toBridge"
+                v-bind:fromBridge="toBridge"
+                @stepping="stepping"
+                @update_finalize_info="update_finalize_info"
+              />
               <br />
             </v-stepper-content>
 
@@ -69,6 +76,10 @@
             <v-stepper-content step="2">
               <History />
             </v-stepper-content>
+          </div>
+          <div v-if="step > 4">
+            <v-btn @click="step=1" color="primary">Select Bridge</v-btn>or
+            <v-btn @click="step=2" color="primary">Transfer Again</v-btn>
           </div>
         </v-stepper>
       </v-content>
@@ -103,8 +114,7 @@ export default {
     verifiedReceiver: "",
     verifiedAmount: 0,
     etheraccount: null,
-    aergoaccount: null,
-    web3: null
+    aergoaccount: null
   }),
   methods: {
     login_ethereum(etheraccount) {
