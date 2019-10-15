@@ -39,6 +39,7 @@
             <v-stepper-content step="2">
               <Form
                 v-bind:bridge="fromBridge"
+                v-bind:toBridge="toBridge"
                 v-bind:optype="fromOpType"
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
@@ -61,6 +62,7 @@
             <v-stepper-content step="4">
               <Form
                 v-bind:bridge="toBridge"
+                v-bind:toBridge="toBridge"
                 v-bind:optype="toOpType"
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
@@ -78,6 +80,8 @@
             </v-stepper-content>
           </div>
           <div v-if="step > 4">
+            Finish.
+            다른걸 진행하려면 아래 버튼을 눌러라. <br />
             <v-btn @click="step=1" color="primary">Select Bridge</v-btn>or
             <v-btn @click="step=2" color="primary">Transfer Again</v-btn>
           </div>

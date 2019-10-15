@@ -84,7 +84,7 @@ export default {
       if (!v) {
         return "Address is required";
       } else {
-        return validateAddress(this.fromBridge.net.type, v);
+        return validateAddress(this.toBridge.net.type, v);
       }
     }
   }

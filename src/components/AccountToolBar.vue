@@ -39,6 +39,9 @@
                 <v-list-item-title>Logged In</v-list-item-title>
                 <v-list-item-subtitle>{{this.aergoaccount.address}}</v-list-item-subtitle>
               </v-list-item-content>
+              <v-btn text icon @click="getAergoActiveAccount">
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
             </v-list-item>
           </v-list>
         </v-card>

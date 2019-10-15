@@ -1,6 +1,6 @@
 <template>
   <div>
-    SHOW ME
+    TODO is this OK??????
     <v-container fluid class="pa-0">
       <v-data-iterator
         :items="txs"

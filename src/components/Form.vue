@@ -42,26 +42,44 @@
       </v-list-item>
     </v-list>
 
+    <!-- display logined wallet info -->
     <v-form ref="form" v-model="valid" lazy-validation>
-      <Account
-        v-bind:bridge="bridge"
-        v-bind:etheraccount="etheraccount"
-        v-bind:aergoaccount="aergoaccount"
-        v-bind:isLogin="isLogin"
-        @checklogin="checklogin"
-      />
+      <v-text-field
+        ref="textField"
+        v-model="wallet.address"
+        label="From Address"
+        :rules="[validateAccount]"
+        disabled
+        required
+        :class="wallet.isLogin?'':'errored--disable-textfield'"
+      >
+        <template v-slot:prepend>
+          <v-img
+            v-if="wallet.type === 'aergo'"
+            :src="require('../assets/aergoicon.png')"
+            width="24"
+          ></v-img>
+          <v-img
+            v-else-if="wallet.type === 'ethereum'"
+            :src="require('../assets/metamask.png')"
+            width="24"
+          ></v-img>
+        </template>
+      </v-text-field>
+
       <v-text-field
         v-model="nextVerify"
         :rules="nextVerifyRules"
         label=" Next Verification Time (Estimated)"
         required
         disabled
+        :class="isTimeOk?'':'errored--disable-textfield'"
       ></v-text-field>
       <div v-if="inout === 'in'">
         <v-text-field
           v-model="receiver"
           :rules="[validateReceiver]"
-          label="To Address"
+          :label="'To Address (' + toBridge.net.label + ')'"
           required
           clearable
         ></v-text-field>
@@ -89,39 +107,38 @@
         </v-text-field>
       </div>
     </v-form>
-    <v-btn
-      color="primary"
-      :disabled="valid === false || isLogin === false"
-      @click="$emit('stepping', 'next');"
-    >Send {{this.optype}} Tx</v-btn>
-    <v-btn text @click="$emit('stepping', 'prev');">Back</v-btn>
+    <v-btn color="primary" :disabled="valid === false" @click="clickNext">Send {{this.optype}} Tx</v-btn>
+    <v-btn text @click="clickBack">Back</v-btn>
   </div>
 </template>
 
 <script>
-//:disabled="inout==='out'"
-import Account from "./Account";
 import { validateAddress } from "./Commons";
 
 export default {
   name: "Form",
   props: [
     "bridge",
+    "toBridge",
     "optype",
     "etheraccount",
     "aergoaccount",
     "verifiedReceiver",
     "verifiedAmount"
   ],
-  components: { Account },
+  components: {},
   data: () => ({
     valid: false,
-    isLogin: false,
     receiver: "",
     amount: "",
-    amountRules: [],
+    amountRules: [
+      v => !!v || "Amount is required",
+      //v => /[0-9]+(.?[0-9]*)/.test(v) || "Amount must be real number"
+      v => /^\d+(\.?\d*)$/.test(v) || "Amount must be real number"
+    ],
     nextVerify: 100,
-    nextVerifyRules: []
+    nextVerifyRules: [],
+    isTimeOk: true
   }),
   computed: {
     inout: function() {
@@ -140,25 +157,99 @@ export default {
       } else {
         return "";
       }
+    },
+    wallet: function() {
+      if (this.bridge) {
+        if (this.bridge.net.type === "aergo" && this.aergoaccount) {
+          if (this.aergoaccount.chainId === this.bridge.net.chainId) {
+            return {
+              isLogin: true,
+              address: this.aergoaccount.address,
+              err: "",
+              type: this.bridge.net.type
+            };
+          }
+          return {
+            isLogin: false,
+            address: this.aergoaccount.address,
+            err: "The account's chainId is different with the bridge's",
+            type: this.bridge.net.type
+          };
+        } else if (this.bridge.net.type === "ethereum" && this.etheraccount) {
+          if (this.etheraccount.selectedAddress) {
+            if (this.etheraccount.chainId === this.bridge.net.chainId) {
+              return {
+                isLogin: true,
+                address: this.etheraccount.selectedAddress,
+                err: "",
+                type: this.bridge.net.type
+              };
+            }
+            return {
+              isLogin: false,
+              address: this.etheraccount.selectedAddress,
+              err: "The account's chainId is different with the bridge's",
+              type: this.bridge.net.type
+            };
+          } else {
+            return {
+              isLogin: false,
+              address: this.etheraccount.selectedAddress,
+              err: "Click metamask icon at toolbar to connect this DApp",
+              type: this.bridge.net.type
+            };
+          }
+        } else {
+          // logged out
+          if (this.bridge.net.type === "aergo") {
+            return {
+              isLogin: false,
+              address: "",
+              err: "Login to aergo connect",
+              type: this.bridge.net.type
+            };
+          } else {
+            return {
+              isLogin: false,
+              address: "",
+              err: "Login to Metamask",
+              type: this.bridge.net.type
+            };
+          }
+        }
+      } else {
+        return {
+          isLogin: false,
+          address: "",
+          err: "Bridge is Not Initialized",
+          type: ""
+        };
+      }
     }
   },
 
   methods: {
-    checklogin(isLoggedIn) {
-      this.isLogin = isLoggedIn;
-    },
-    validate() {
+    clickNext() {
       if (this.$refs.form.validate()) {
-        this.valid = true;
-      } else {
-        this.valid = false;
+        this.$emit("stepping", "next");
       }
+    },
+    clickBack() {
+      this.$refs.form.resetValidation();
+      this.$emit("stepping", "prev");
     },
     validateReceiver(v) {
       if (!v) {
         return "Address is required";
       } else {
-        return validateAddress(this.bridge.net.type, v);
+        return validateAddress(this.toBridge.net.type, v);
+      }
+    },
+    validateAccount() {
+      if (this.wallet.isLogin) {
+        return true;
+      } else {
+        return this.wallet.err;
       }
     }
   }
@@ -166,4 +257,18 @@ export default {
 </script>
 
 <style>
+/*
+.theme--light.v-messages {
+ color: red !important;
+}
+.theme--light.v-input--is-disabled .v-label {
+  color: red !important;
+}
+*/
+.errored--disable-textfield .theme--light.v-messages {
+  color: red !important;
+}
+.errored--disable-textfield .v-label {
+  color: red !important;
+}
 </style>
