@@ -8,7 +8,13 @@
         label="To Address"
         required
         clearable
-      ></v-text-field>
+      >
+        <template v-slot:append-outer>
+          <v-btn color="primary" text @click="receiver = sharedReceiver">Load To Address</v-btn>
+          <v-btn color="primary">Search</v-btn>
+        </template>
+      </v-text-field>
+
       <v-container>
         <v-row>
           <v-col cols="5">
@@ -62,7 +68,7 @@ export default {
   components: {
     //
   },
-  props: ["fromBridge", "toBridge"],
+  props: ["fromBridge", "toBridge", "sharedReceiver"],
   data: () => ({
     receiver: "",
     receiverRules: [v => !!v || "Address is required"],

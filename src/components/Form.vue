@@ -231,6 +231,7 @@ export default {
   methods: {
     clickNext() {
       if (this.$refs.form.validate()) {
+        this.$emit("updateSharedReceiver", this.receiver);
         this.$emit("stepping", "next");
       }
     },

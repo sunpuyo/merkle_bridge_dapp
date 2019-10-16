@@ -43,6 +43,9 @@
                 v-bind:optype="fromOpType"
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
+                v-bind:verifiedReceiver="verifiedReceiver"
+                v-bind:verifiedAmount="verifiedAmount"
+                @updateSharedReceiver="updateSharedReceiver"
                 @stepping="stepping"
               />
             </v-stepper-content>
@@ -52,6 +55,7 @@
               <Status
                 v-bind:toBridge="toBridge"
                 v-bind:fromBridge="toBridge"
+                v-bind:sharedReceiver="sharedReceiver"
                 @stepping="stepping"
                 @update_finalize_info="update_finalize_info"
               />
@@ -66,8 +70,10 @@
                 v-bind:optype="toOpType"
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
+                v-bind:sharedReceiver="sharedReceiver"
                 v-bind:verifiedReceiver="verifiedReceiver"
                 v-bind:verifiedAmount="verifiedAmount"
+                @updateSharedReceiver="updateSharedReceiver"
                 @stepping="stepping"
               />
             </v-stepper-content>
@@ -81,7 +87,8 @@
           </div>
           <div v-if="step > 4">
             Finish.
-            다른걸 진행하려면 아래 버튼을 눌러라. <br />
+            다른걸 진행하려면 아래 버튼을 눌러라.
+            <br />
             <v-btn @click="step=1" color="primary">Select Bridge</v-btn>or
             <v-btn @click="step=2" color="primary">Transfer Again</v-btn>
           </div>
@@ -115,6 +122,7 @@ export default {
     toBridge: null,
     fromOpType: null,
     toOpType: null,
+    sharedReceiver: "",
     verifiedReceiver: "",
     verifiedAmount: 0,
     etheraccount: null,
@@ -137,8 +145,13 @@ export default {
       this.toOpType = toOpType;
     },
     update_finalize_info(verifiedReceiver, verifiedAmount) {
+      /* eslint-disable */
+      console.log(verifiedReceiver);
       this.verifiedReceiver = verifiedReceiver;
       this.verifiedAmount = verifiedAmount;
+    },
+    updateSharedReceiver(sharedReceiver) {
+      this.sharedReceiver = sharedReceiver;
     },
     stepping(step) {
       if (step === "next") {
