@@ -107,13 +107,15 @@
         </v-text-field>
       </div>
     </v-form>
-    <v-btn color="primary" :disabled="valid === false" @click="clickNext">Send {{this.optype}} Tx</v-btn>
+    <v-btn color="primary" :disabled="valid === false" @click="clickSend">Send {{this.optype}} Tx</v-btn>
     <v-btn text @click="clickBack">Back</v-btn>
   </div>
 </template>
 
 <script>
 import { validateAddress } from "./Commons";
+import { ethToAergo } from "eth-merkle-bridge-js";
+import Web3 from "web3";
 
 export default {
   name: "Form",
@@ -138,8 +140,30 @@ export default {
     ],
     nextVerify: 100,
     nextVerifyRules: [],
-    isTimeOk: true
+    isTimeOk: true,
+    web3: null
   }),
+  created() {
+    // load ethereum web3
+    // Modern dapp browsers...
+    if (window.ethereum) {
+      this.web3 = new Web3(window.ethereum);
+    }
+    // Legacy dapp browsers...
+    else if (window.web3) {
+      this.web3 = new Web3(window.web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
+    }
+    // Non-dapp browsers...
+    else {
+      /* eslint-disable no-console */
+      console.log(
+        "Non-Ethereum browser detected. You should consider trying MetaMask!"
+      );
+      this.web3 = new Web3(
+        new Web3.providers.HttpProvider("http://localhost:8545")
+      );
+    }
+  },
   computed: {
     inout: function() {
       if (
@@ -177,7 +201,10 @@ export default {
           };
         } else if (this.bridge.net.type === "ethereum" && this.etheraccount) {
           if (this.etheraccount.selectedAddress) {
-            if (this.etheraccount.chainId === this.bridge.net.chainId) {
+            if (
+              this.etheraccount.networkVersion ===
+              this.bridge.net.networkVersion
+            ) {
               return {
                 isLogin: true,
                 address: this.etheraccount.selectedAddress,
@@ -185,10 +212,13 @@ export default {
                 type: this.bridge.net.type
               };
             }
+
             return {
               isLogin: false,
               address: this.etheraccount.selectedAddress,
-              err: "The account's chainId is different with the bridge's",
+              err:
+                "The account's network version is different with the bridge's" +
+                this.etheraccount.networkVersion,
               type: this.bridge.net.type
             };
           } else {
@@ -229,14 +259,25 @@ export default {
   },
 
   methods: {
-    clickNext() {
+    clickSend() {
       if (this.$refs.form.validate()) {
+        console.log(this.receiver, this.bridge.asset.id, this.amount, this.bridge.contract.id)
+        const receipt = ethToAergo.lock(
+          this.web3, this.receiver, this.bridge.asset.id, this.amount, this.bridge.contract.id, this.bridge.contract.abi);
+          
+          console.log(receipt);
+
         this.$emit("updateSharedReceiver", this.receiver);
         this.$emit("stepping", "next");
+      } else {
+        if (!this.wallet.isLogin) {
+          this.$emit("needLogin", true, this.bridge.net.type);
+        }
       }
     },
     clickBack() {
       this.$refs.form.resetValidation();
+      this.$emit("needLogin", false, this.bridge.net.type);
       this.$emit("stepping", "prev");
     },
     validateReceiver(v) {
@@ -248,6 +289,8 @@ export default {
     },
     validateAccount() {
       if (this.wallet.isLogin) {
+        this.$emit("needLogin", false, this.bridge.net.type);
+
         return true;
       } else {
         return this.wallet.err;

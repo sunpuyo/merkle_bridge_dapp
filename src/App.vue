@@ -17,6 +17,8 @@
         </v-list-item>
       </v-navigation-drawer>
       <AccountToolBar
+        v-bind:isLoginNeeded="isLoginNeeded"
+        v-bind:isLoginNeededNetType="isLoginNeededNetType"
         @login_ethereum="login_ethereum"
         @login_aergo="login_aergo"
         @open_drawer="open_drawer"
@@ -25,6 +27,8 @@
       <v-content class="pa-0">
         최상단에 뭔가 머클브릿지에 대한 간략한 설명과 사용법을 적어야 할거 같다.
         아니면 다른 상세 메인 페이지를 탭으로 제공하는 것도 방법일듯.
+     
+            FIXXME
         <v-stepper v-model="step" vertical>
           <v-stepper-step :complete="step > 1" step="1">
             Select a bridge
@@ -46,6 +50,7 @@
                 v-bind:verifiedReceiver="verifiedReceiver"
                 v-bind:verifiedAmount="verifiedAmount"
                 @updateSharedReceiver="updateSharedReceiver"
+                @needLogin="needLogin"
                 @stepping="stepping"
               />
             </v-stepper-content>
@@ -74,6 +79,7 @@
                 v-bind:verifiedReceiver="verifiedReceiver"
                 v-bind:verifiedAmount="verifiedAmount"
                 @updateSharedReceiver="updateSharedReceiver"
+                @needLogin="needLogin"
                 @stepping="stepping"
               />
             </v-stepper-content>
@@ -125,6 +131,8 @@ export default {
     sharedReceiver: "",
     verifiedReceiver: "",
     verifiedAmount: 0,
+    isLoginNeeded: false,
+    isLoginNeededNetType: "",
     etheraccount: null,
     aergoaccount: null
   }),
@@ -145,13 +153,17 @@ export default {
       this.toOpType = toOpType;
     },
     update_finalize_info(verifiedReceiver, verifiedAmount) {
-      /* eslint-disable */
+      /* eslint-disable no-console */
       console.log(verifiedReceiver);
       this.verifiedReceiver = verifiedReceiver;
       this.verifiedAmount = verifiedAmount;
     },
     updateSharedReceiver(sharedReceiver) {
       this.sharedReceiver = sharedReceiver;
+    },
+    needLogin(isLoginNeeded, isLoginNeededNetType) {
+      this.isLoginNeeded = isLoginNeeded;
+      this.isLoginNeededNetType = isLoginNeededNetType;
     },
     stepping(step) {
       if (step === "next") {

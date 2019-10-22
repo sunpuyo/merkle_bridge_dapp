@@ -5,16 +5,26 @@
 
       <!-- title on toolbar -->
       <v-toolbar-title>Aergo to Ethereum Merkle Bridge</v-toolbar-title>
-
       <v-spacer></v-spacer>
-      <!-- aergo accoount chip -->
+      <!-- aergo accoount button -->
       <v-menu bottom right transition="scale-transition" origin="top left">
         <template v-slot:activator="{ on }">
-          <v-chip pill outlined v-on="on">
-            <v-avatar left>
-              <v-img :src="require('../assets/aergoicon.png')"></v-img>
-            </v-avatar>
-          </v-chip>
+          <span v-if="isLoginNeededNetType==='aergo' && isLoginNeeded===true">
+            <v-btn fab color="white" v-on="on">
+              <v-img
+                class="blinking"
+                :src="require('../assets/aergoicon.png')"
+                contain
+                width="30"
+                height="30"
+              ></v-img>
+            </v-btn>
+          </span>
+          <span v-else>
+            <v-btn icon v-on="on">
+              <v-img :src="require('../assets/aergoicon.png')" contain width="30" height="30"></v-img>
+            </v-btn>
+          </span>
         </template>
         <v-card>
           <!-- not logged in to aergo connect -->
@@ -47,14 +57,25 @@
         </v-card>
       </v-menu>
 
-      <!-- ethereum accoount chip -->
+      <!-- ethereum accoount button -->
       <v-menu bottom right transition="scale-transition" origin="top left">
         <template v-slot:activator="{ on }">
-          <v-chip pill outlined v-on="on">
-            <v-avatar left>
-              <v-img :src="require('../assets/metamask.png')"></v-img>
-            </v-avatar>
-          </v-chip>
+          <span v-if="isLoginNeededNetType==='ethereum' && isLoginNeeded===true">
+            <v-btn fab color="white" v-on="on">
+              <v-img
+                class="blinking"
+                :src="require('../assets/metamask.png')"
+                contain
+                width="30"
+                height="30"
+              ></v-img>
+            </v-btn>
+          </span>
+          <span v-else>
+            <v-btn icon v-on="on">
+              <v-img :src="require('../assets/metamask.png')" contain width="30" height="30"></v-img>
+            </v-btn>
+          </span>
         </template>
         <v-card>
           <!-- not logged in to aergo connect -->
@@ -91,8 +112,11 @@
 </template>
 
 <script>
+import Web3 from "web3";
+
 export default {
   name: "AccountToolBar",
+  props: ["isLoginNeeded", "isLoginNeededNetType"],
   components: {},
   data: () => ({
     etheraccount: null,
@@ -105,14 +129,15 @@ export default {
     // load ethereum web3
     // Modern dapp browsers...
     if (window.ethereum) {
-      this.web3 = new Web3(ethereum);
+      this.web3 = new Web3(window.ethereum);
     }
     // Legacy dapp browsers...
     else if (window.web3) {
-      this.web3 = new Web3(web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
+      this.web3 = new Web3(window.web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
     }
     // Non-dapp browsers...
     else {
+      /* eslint-disable no-console */
       console.log(
         "Non-Ethereum browser detected. You should consider trying MetaMask!"
       );
@@ -140,8 +165,26 @@ export default {
       });
     },
     connectMetamask() {
-      ethereum.enable();
+      window.ethereum.enable();
+    },
+    aergoWalletColor() {
+      return "purple";
     }
   }
 };
 </script>
+
+<style scoped>
+.blinking {
+  animation: blink 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+</style>
