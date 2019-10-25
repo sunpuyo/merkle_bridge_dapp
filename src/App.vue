@@ -27,8 +27,7 @@
       <v-content class="pa-0">
         최상단에 뭔가 머클브릿지에 대한 간략한 설명과 사용법을 적어야 할거 같다.
         아니면 다른 상세 메인 페이지를 탭으로 제공하는 것도 방법일듯.
-     
-            FIXXME
+        FIXXME
         <v-stepper v-model="step" vertical>
           <v-stepper-step :complete="step > 1" step="1">
             Select a bridge
@@ -42,7 +41,7 @@
             <v-stepper-step :complete="step > 2" step="2">Send an asset</v-stepper-step>
             <v-stepper-content step="2">
               <Form
-                v-bind:bridge="fromBridge"
+                v-bind:fromBridge="fromBridge"
                 v-bind:toBridge="toBridge"
                 v-bind:optype="fromOpType"
                 v-bind:etheraccount="etheraccount"
@@ -59,7 +58,7 @@
             <v-stepper-content step="3">
               <Status
                 v-bind:toBridge="toBridge"
-                v-bind:fromBridge="toBridge"
+                v-bind:fromBridge="fromBridge"
                 v-bind:sharedReceiver="sharedReceiver"
                 @stepping="stepping"
                 @update_finalize_info="update_finalize_info"
@@ -70,7 +69,7 @@
             <v-stepper-step :complete="step > 4" step="4">Receive the asset</v-stepper-step>
             <v-stepper-content step="4">
               <Form
-                v-bind:bridge="toBridge"
+                v-bind:fromBridge="fromBridge"
                 v-bind:toBridge="toBridge"
                 v-bind:optype="toOpType"
                 v-bind:etheraccount="etheraccount"
@@ -99,6 +98,11 @@
             <v-btn @click="step=2" color="primary">Transfer Again</v-btn>
           </div>
         </v-stepper>
+        TMP increase Approval : {{st}} =
+        <v-btn @click="increaseApproval" color="primary">Increase Approval</v-btn>
+
+        <v-text-field v-model="tmpText"> </v-text-field>
+        <v-btn @click="tmpReceipt"> search receipt </v-btn>
       </v-content>
     </v-app>
   </div>
@@ -110,6 +114,10 @@ import BridgeSelect from "./components/BridgeSelect";
 import Form from "./components/Form";
 import Status from "./components/Status";
 import History from "./components/History";
+import { web3 } from "./components/Web3Loader";
+import {  erc20Abi } from "./components/Commons";
+import { ethToAergo as eta } from "eth-merkle-bridge-js";
+import { AergoClient, GrpcWebProvider } from "@herajs/client";
 
 export default {
   name: "App",
@@ -134,7 +142,9 @@ export default {
     isLoginNeeded: false,
     isLoginNeededNetType: "",
     etheraccount: null,
-    aergoaccount: null
+    aergoaccount: null,
+    st: "",
+    tmpText:'',
   }),
   methods: {
     login_ethereum(etheraccount) {
@@ -173,6 +183,25 @@ export default {
       } else {
         this.step = step;
       }
+    },
+    async increaseApproval() {
+      const receipt = await eta.increaseApproval(
+        web3,
+        "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
+        100,
+        "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
+        erc20Abi
+      );
+      console.log("INCREASE APPROVAL RECEIPT:", receipt);
+      this.st = receipt.status;
+    },
+    async tmpReceipt() {
+      let herajs = new AergoClient(
+            {},
+            new GrpcWebProvider({ url: "http://127.0.0.1:7845"})
+          );
+      const receipt = await herajs.getTransactionReceipt(this.tmpText);
+          console.log("RECEIPT", receipt);
     }
   }
 };

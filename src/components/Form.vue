@@ -47,7 +47,7 @@
       <v-text-field
         ref="textField"
         v-model="wallet.address"
-        label="From Address"
+        :label="inout==='in'? 'From Address' : 'Operator Address'"
         :rules="[validateAccount]"
         disabled
         required
@@ -83,8 +83,16 @@
           required
           clearable
         ></v-text-field>
-        <v-text-field v-model="amount" :rules="amountRules" label="Amount" required clearable>
-          <span slot="append" v-if="bridge">{{bridge.asset.label}}</span>
+        <v-text-field
+          v-model="amount"
+          :rules="[validateAmount]"
+          :label="'Amount (' + bridge.asset.label +')'"
+          required
+          clearable
+          append-outer-icon="mdi-refresh"
+          @click:append-outer="updateDelegateAmount"
+        >
+          <span slot="append" v-if="bridge">&nbsp; / {{this.delegatedAmount}} Approved</span>
         </v-text-field>
       </div>
       <div v-else-if="inout === 'out'">
@@ -96,31 +104,48 @@
           required
           disabled
         ></v-text-field>
-        <v-text-field
-          v-model="verifiedAmount"
-          :rules="amountRules"
-          label="Amount"
-          required
-          disabled
-        >
+        <v-text-field v-model="verifiedAmount" label="Amount" required disabled>
           <span slot="append" v-if="bridge">{{bridge.asset.label}}</span>
         </v-text-field>
       </div>
     </v-form>
-    <v-btn color="primary" :disabled="valid === false" @click="clickSend">Send {{this.optype}} Tx</v-btn>
+    <v-btn
+      color="primary"
+      :loading="loading"
+      :disabled="valid === false"
+      @click="clickSend"
+    >Send {{this.optype}} Tx</v-btn>
     <v-btn text @click="clickBack">Back</v-btn>
+
+    <!-- result dialog -->
+    <v-row justify="center">
+      <v-dialog v-model="dialog.open" max-width="290">
+        <v-card>
+          <v-card-title v-if="dialog.success" class="headline">
+            <span v-if="dialog.success">Success</span>
+            <span v-else>Fail</span>
+          </v-card-title>
+          <v-card-text>{{dialog.message}}</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" text @click="clickDialogOk">Ok</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
   </div>
 </template>
 
 <script>
+import { ethToAergo } from "eth-merkle-bridge-js"; //aergoToEth
+import { web3 } from "./Web3Loader";
 import { validateAddress } from "./Commons";
-import { ethToAergo } from "eth-merkle-bridge-js";
-import Web3 from "web3";
+import { AergoClient, GrpcWebProvider } from "@herajs/client";
 
 export default {
   name: "Form",
   props: [
-    "bridge",
+    "fromBridge",
     "toBridge",
     "optype",
     "etheraccount",
@@ -133,37 +158,17 @@ export default {
     valid: false,
     receiver: "",
     amount: "",
-    amountRules: [
-      v => !!v || "Amount is required",
-      //v => /[0-9]+(.?[0-9]*)/.test(v) || "Amount must be real number"
-      v => /^\d+(\.?\d*)$/.test(v) || "Amount must be real number"
-    ],
+    delegatedAmount: 0,
     nextVerify: 100,
     nextVerifyRules: [],
     isTimeOk: true,
-    web3: null
+    loading: false,
+    dialog: {
+      open: false,
+      success: false,
+      message: ""
+    }
   }),
-  created() {
-    // load ethereum web3
-    // Modern dapp browsers...
-    if (window.ethereum) {
-      this.web3 = new Web3(window.ethereum);
-    }
-    // Legacy dapp browsers...
-    else if (window.web3) {
-      this.web3 = new Web3(window.web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
-    }
-    // Non-dapp browsers...
-    else {
-      /* eslint-disable no-console */
-      console.log(
-        "Non-Ethereum browser detected. You should consider trying MetaMask!"
-      );
-      this.web3 = new Web3(
-        new Web3.providers.HttpProvider("http://localhost:8545")
-      );
-    }
-  },
   computed: {
     inout: function() {
       if (
@@ -180,6 +185,15 @@ export default {
         return "out";
       } else {
         return "";
+      }
+    },
+    bridge: function() {
+      if (this.inout === "in") {
+        return this.fromBridge;
+      } else if (this.inout === "out") {
+        return this.toBridge;
+      } else {
+        return null;
       }
     },
     wallet: function() {
@@ -257,18 +271,119 @@ export default {
       }
     }
   },
-
   methods: {
-    clickSend() {
-      if (this.$refs.form.validate()) {
-        console.log(this.receiver, this.bridge.asset.id, this.amount, this.bridge.contract.id)
-        const receipt = ethToAergo.lock(
-          this.web3, this.receiver, this.bridge.asset.id, this.amount, this.bridge.contract.id, this.bridge.contract.abi);
-          
-          console.log(receipt);
+    /*handleResult(receipt) {
+      this.loading = true;
 
-        this.$emit("updateSharedReceiver", this.receiver);
-        this.$emit("stepping", "next");
+      receipt
+        .then(response => {
+          const hash = response.transactionHash
+            ? response.transactionHash
+            : response.hash;
+          this.dialog.open = true;
+          this.dialog.success = true;
+          this.dialog.message = hash;
+          this.loading = false;
+
+          return hash;
+        })
+        .catch(err => {
+          this.dialog.open = true;
+          this.dialog.success = false;
+          this.dialog.message = err;
+          this.loading = false;
+
+          return null;
+        });
+    },*/
+    async handleResult(receipt) {
+      this.loading = true;
+      try {
+        const response = await receipt;
+
+        const hash = response.transactionHash
+          ? response.transactionHash
+          : response.hash;
+        this.dialog.open = true;
+        this.dialog.success = true;
+        this.dialog.message = hash;
+        this.loading = false;
+        /* eslint-disable */
+        console.log(response);
+
+        return hash;
+      } catch (err) {
+        this.dialog.open = true;
+        this.dialog.success = false;
+        this.dialog.message = err;
+        this.loading = false;
+        /* eslint-disable */
+        console.log(err);
+
+        return null;
+      }
+    },
+    async clickSend() {
+      if (this.$refs.form.validate()) {
+        if (this.optype === "lock") {
+          await this.handleResult(
+            ethToAergo.lock(
+              web3,
+              this.receiver,
+              this.fromBridge.asset.id,
+              this.amount,
+              this.fromBridge.contract.id,
+              this.fromBridge.contract.abi
+            )
+          );
+        } else if (this.optype == "unfreeze") {
+          let herajs = new AergoClient(
+            {},
+            new GrpcWebProvider({ url: this.toBridge.net.endpoint })
+          );
+
+          let builtTx = await ethToAergo.buildUnfreezeTx(
+            web3,
+            herajs,
+            this.wallet.address,
+            this.fromBridge.contract.id,
+            this.toBridge.contract.id,
+            this.toBridge.contract.abi,
+            this.verifiedReceiver,
+            this.fromBridge.asset.id
+          );
+
+          builtTx.to = this.toBridge.contract.id;
+          console.log(builtTx);
+          builtTx.payload_json = JSON.parse(builtTx.payload);
+          delete builtTx.payload;
+
+          const txHash = await this.handleResult(
+            new Promise((resolve, reject) => {
+              try {
+                window.addEventListener(
+                  "AERGO_SEND_TX_RESULT",
+                  event => {
+                    console.log("EVNETD", event.detail);
+                    resolve(event.detail);
+                  },
+                  { once: true }
+                );
+
+                window.postMessage({
+                  type: "AERGO_REQUEST",
+                  action: "SEND_TX",
+                  data: builtTx
+                });
+              } catch (err) {
+                reject(err);
+              }
+            })
+          );
+          
+          const receipt = await herajs.getTransactionReceipt(txHash);
+          console.log("ret", receipt);
+        }
       } else {
         if (!this.wallet.isLogin) {
           this.$emit("needLogin", true, this.bridge.net.type);
@@ -280,11 +395,18 @@ export default {
       this.$emit("needLogin", false, this.bridge.net.type);
       this.$emit("stepping", "prev");
     },
+    clickDialogOk() {
+      this.dialog.open = false;
+      if (this.dialog.success) {
+        this.$emit("stepping", "next");
+        this.$emit("updateSharedReceiver", this.receiver);
+      }
+    },
     validateReceiver(v) {
-      if (!v) {
-        return "Address is required";
-      } else {
+      if (this.toBridge) {
         return validateAddress(this.toBridge.net.type, v);
+      } else {
+        return true;
       }
     },
     validateAccount() {
@@ -295,6 +417,54 @@ export default {
       } else {
         return this.wallet.err;
       }
+    },
+    validateAmount(v) {
+      if (!v) {
+        return "Amount is required";
+      } else if (false === /^\d+(\.?\d*)$/.test(v)) {
+        return "Amount must be real number";
+      } else if (parseFloat(v) <= 0) {
+        return "Amount must be bigger than 0";
+      } else if (parseFloat(v) > this.delegatedAmount) {
+        return (
+          "Delegated Asset Amount is Insufficient (Current Approval = " +
+          this.delegatedAmount +
+          ")"
+        );
+      }
+      return true;
+    },
+    updateDelegateAmount() {
+      if (this.bridge && this.inout === "in" && this.wallet.isLogin) {
+        if (this.fromBridge.asset.type === "erc20") {
+          // define contract
+          let assetContract = new web3.eth.Contract(
+            this.fromBridge.asset.abi,
+            this.fromBridge.asset.id
+          );
+          // call allowance of erc20
+          assetContract.methods
+            .allowance(this.wallet.address, this.fromBridge.contract.id)
+            .call()
+            .then(delegated => {
+              this.delegatedAmount = delegated;
+            });
+        } else {
+          //TODO
+        }
+
+        this.delegatedAmount = "?";
+      }
+
+      this.delegatedAmount = "?";
+    }
+  },
+
+  watch: {
+    // this updates delegated amount
+    "wallet.address": function() {
+      console.log("refresh delegated amount", this.wallet);
+      this.updateDelegateAmount();
     }
   }
 };

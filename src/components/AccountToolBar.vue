@@ -112,7 +112,7 @@
 </template>
 
 <script>
-import Web3 from "web3";
+import { web3 , updateDefaultAccount} from "./Web3Loader";
 
 export default {
   name: "AccountToolBar",
@@ -121,33 +121,17 @@ export default {
   data: () => ({
     etheraccount: null,
     aergoaccount: null,
-    web3: null,
+    
     aergoapi: null,
     drawer: null
   }),
   created() {
-    // load ethereum web3
-    // Modern dapp browsers...
-    if (window.ethereum) {
-      this.web3 = new Web3(window.ethereum);
-    }
-    // Legacy dapp browsers...
-    else if (window.web3) {
-      this.web3 = new Web3(window.web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
-    }
-    // Non-dapp browsers...
-    else {
-      /* eslint-disable no-console */
-      console.log(
-        "Non-Ethereum browser detected. You should consider trying MetaMask!"
-      );
-      this.web3 = new Web3(
-        new Web3.providers.HttpProvider("http://localhost:8545")
-      );
-    }
+    /* eslint-disable */ 
+    console.log(web3.currentProvider);
     // set ethereum account change listener
-    this.web3.currentProvider.publicConfigStore.on("update", account => {
+    web3.currentProvider.connection.publicConfigStore.on("update", account => {
       this.etheraccount = account;
+      updateDefaultAccount(account.selectedAddress);
       this.$emit("login_ethereum", account);
     });
 

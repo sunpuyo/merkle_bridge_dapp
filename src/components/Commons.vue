@@ -1,4 +1,328 @@
 <script>
+export const erc20Abi = [
+  {
+    constant: true,
+    inputs: [],
+    name: "name",
+    outputs: [{ name: "", type: "string" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      { name: "_spender", type: "address" },
+      { name: "_value", type: "uint256" }
+    ],
+    name: "approve",
+    outputs: [{ name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "totalSupply",
+    outputs: [{ name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      { name: "_from", type: "address" },
+      { name: "_to", type: "address" },
+      { name: "_value", type: "uint256" }
+    ],
+    name: "transferFrom",
+    outputs: [{ name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "decimals",
+    outputs: [{ name: "", type: "uint8" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [],
+    name: "unpause",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "paused",
+    outputs: [{ name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      { name: "_spender", type: "address" },
+      { name: "_subtractedValue", type: "uint256" }
+    ],
+    name: "decreaseApproval",
+    outputs: [{ name: "success", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [{ name: "_owner", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [],
+    name: "pause",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "owner",
+    outputs: [{ name: "", type: "address" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "symbol",
+    outputs: [{ name: "", type: "string" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      { name: "_to", type: "address" },
+      { name: "_value", type: "uint256" }
+    ],
+    name: "transfer",
+    outputs: [{ name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      { name: "_spender", type: "address" },
+      { name: "_addedValue", type: "uint256" }
+    ],
+    name: "increaseApproval",
+    outputs: [{ name: "success", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: true,
+    inputs: [
+      { name: "_owner", type: "address" },
+      { name: "_spender", type: "address" }
+    ],
+    name: "allowance",
+    outputs: [{ name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [{ name: "newOwner", type: "address" }],
+    name: "transferOwnership",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "constructor"
+  },
+  { anonymous: false, inputs: [], name: "Pause", type: "event" },
+  { anonymous: false, inputs: [], name: "Unpause", type: "event" },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "previousOwner", type: "address" },
+      { indexed: true, name: "newOwner", type: "address" }
+    ],
+    name: "OwnershipTransferred",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "owner", type: "address" },
+      { indexed: true, name: "spender", type: "address" },
+      { indexed: false, name: "value", type: "uint256" }
+    ],
+    name: "Approval",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, name: "from", type: "address" },
+      { indexed: true, name: "to", type: "address" },
+      { indexed: false, name: "value", type: "uint256" }
+    ],
+    name: "Transfer",
+    type: "event"
+  }
+];
+
+export const aergoBridgeAbi = {
+  version: "0.2",
+  language: "lua",
+  functions: [
+    {
+      name: "freeze",
+      payable: true,
+      arguments: [{ name: "receiver" }, { name: "amount" }]
+    },
+    {
+      name: "constructor",
+      arguments: [
+        { name: "aergoErc20" },
+        { name: "validators" },
+        { name: "tAnchor" },
+        { name: "tFinal" }
+      ]
+    },
+    { name: "default", payable: true, arguments: [] },
+    {
+      name: "validatorsUpdate",
+      arguments: [
+        { name: "validators" },
+        { name: "signers" },
+        { name: "signatures" }
+      ]
+    },
+    {
+      name: "unfreeze",
+      arguments: [
+        { name: "receiver" },
+        { name: "balance" },
+        { name: "merkleProof" }
+      ]
+    },
+    {
+      name: "unlock",
+      arguments: [
+        { name: "receiver" },
+        { name: "balance" },
+        { name: "tokenAddress" },
+        { name: "merkleProof" }
+      ]
+    },
+    {
+      name: "burn",
+      arguments: [
+        { name: "receiver" },
+        { name: "amount" },
+        { name: "mintAddress" }
+      ]
+    },
+    {
+      name: "tokensReceived",
+      arguments: [
+        { name: "operator" },
+        { name: "from" },
+        { name: "value" },
+        { name: "receiver" }
+      ]
+    },
+    {
+      name: "mint",
+      arguments: [
+        { name: "receiver" },
+        { name: "balance" },
+        { name: "tokenOrigin" },
+        { name: "merkleProof" }
+      ]
+    },
+    {
+      name: "unfreezeFeeUpdate",
+      arguments: [{ name: "fee" }, { name: "signers" }, { name: "signatures" }]
+    },
+    {
+      name: "newAnchor",
+      arguments: [
+        { name: "root" },
+        { name: "height" },
+        { name: "signers" },
+        { name: "signatures" }
+      ]
+    },
+    {
+      name: "tAnchorUpdate",
+      arguments: [
+        { name: "tAnchor" },
+        { name: "signers" },
+        { name: "signatures" }
+      ]
+    },
+    {
+      name: "tFinalUpdate",
+      arguments: [
+        { name: "tFinal" },
+        { name: "signers" },
+        { name: "signatures" }
+      ]
+    }
+  ],
+  state_variables: [
+    { name: "_unfreezes", type: "map" },
+    { name: "_mintedTokens", type: "map" },
+    { name: "_validators", type: "map" },
+    { name: "_locks", type: "map" },
+    { name: "_mints", type: "map" },
+    { name: "_bridgeTokens", type: "map" },
+    { name: "_aergoErc20Bytes", type: "value" },
+    { name: "_tAnchor", type: "value" },
+    { name: "_unfreezeFee", type: "value" },
+    { name: "_burns", type: "map" },
+    { name: "_validatorsCount", type: "value" },
+    { name: "_contractId", type: "value" },
+    { name: "_anchorRoot", type: "value" },
+    { name: "_anchorHeight", type: "value" },
+    { name: "_tFinal", type: "value" },
+    { name: "_nonce", type: "value" },
+    { name: "_unlocks", type: "map" }
+  ]
+};
+
 export const etherBridgeAbi = [
   {
     constant: true,
@@ -899,7 +1223,7 @@ export const defaultBridges = [
         label: "Ethereum Local",
         type: "ethereum",
         networkVersion: "52306",
-        endpoint: "127.0.0.1:8545",
+        endpoint: "http://127.0.0.1:8545",
         scan: ""
       },
       contract: {
@@ -910,7 +1234,8 @@ export const defaultBridges = [
         label: "ERC20 Aergo",
         type: assetType.erc20,
         isPegged: false,
-        id: "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e"
+        id: "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
+        abi: erc20Abi
       }
     },
     bridge2: {
@@ -918,10 +1243,10 @@ export const defaultBridges = [
         label: "Aergo Local",
         type: "aergo",
         chainId: "mainnet",
-        endpoint: "127.0.0.1:7845",
+        endpoint: "http://127.0.0.1:7845",
         scan: ""
       },
-      contract: { id: "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw" },
+      contract: { id: "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw", abi: aergoBridgeAbi },
       asset: {
         label: "Native Aergo",
         type: assetType.native,
@@ -936,10 +1261,10 @@ export const defaultBridges = [
         label: "Aergo testnet",
         type: "aergo",
         chainId: "testnet.aergo.io",
-        endpoint: "127.0.0.1:3000",
+        endpoint: "http://127.0.0.1:3000",
         scan: "https://testnet.aergoscan.io/account/"
       },
-      contract: { id: "AmfzMkaFchxxqg39mcSMkj1rnnBtUZUipDhLBi2H3ewDReJjzLGz" },
+      contract: { id: "AmfzMkaFchxxqg39mcSMkj1rnnBtUZUipDhLBi2H3ewDReJjzLGz", abi: aergoBridgeAbi },
       asset: {
         label: "native aergo",
         type: assetType.native,
@@ -955,12 +1280,13 @@ export const defaultBridges = [
         endpoint: "127.0.0.2:3000",
         scan: "https://ropsten.etherscan.io/address/"
       },
-      contract: { id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9" },
+      contract: { id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9", abi: etherBridgeAbi },
       asset: {
         label: "erc20 aergo",
         type: assetType.erc20,
         isPegged: false,
-        id: "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e"
+        id: "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
+        abi: erc20Abi
       }
     }
   },
@@ -970,7 +1296,7 @@ export const defaultBridges = [
         label: "Aergo testnet",
         type: "aergo",
         chainId: "testnet.aergo.io",
-        endpoint: "127.0.0.1:3000",
+        endpoint: "http://127.0.0.1:3000",
         scan: "https://testnet.aergoscan.io/account/"
       },
       contract: { id: "AmfzMkaFchxxqg39mcSMkj1rnnBtUZUipDhLBi2H3ewDReJjzLGz" },
@@ -1001,34 +1327,16 @@ export const defaultBridges = [
 ];
 
 import { Address } from "@herajs/client";
-import Web3 from "web3";
-
-var web3local;
-
-// load ethereum web3
-// Modern dapp browsers...
-if (window.ethereum) {
-  web3local = new Web3(window.ethereum);
-}
-// Legacy dapp browsers...
-else if (window.web3) {
-  web3local = new Web3(window.web3.currentProvider); //window.web3 = new Web3(web3.currentProvider);
-}
-// Non-dapp browsers...
-else {
-  /* eslint-disable no-console */
-  console.error("no metamask");
-  web3local = new Web3(
-    new Web3.providers.HttpProvider("http://localhost:8545")
-  );
-}
-
-export const web3 = web3local;
+import { web3 } from "./Web3Loader";
+import { utils } from "eth-merkle-bridge-js";
 
 export function validateAddress(netType, address) {
-  if (netType == "aergo") {
+  if (!address) {
+    return "Address is required";
+  } else if (netType == "aergo") {
     try {
       new Address(address);
+      utils.checkAergoAddress(address);
       return true; // no error
     } catch (error) {
       return error.message;
