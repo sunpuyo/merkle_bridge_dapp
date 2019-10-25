@@ -701,7 +701,7 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@herajs/client@^0.13.2", "@herajs/client@^0.13.3":
+"@herajs/client@^0.13.2":
   version "0.13.3"
   resolved "https://registry.yarnpkg.com/@herajs/client/-/client-0.13.3.tgz#45e9cf010bcd78429f701d6c64907451a69a663f"
   integrity sha512-Wgwml256RnbcDbBiv9lbP9vzvmhBQ8pWDdnOvEGbDZFtJnB3rXjJ1LUOHlMFZiK/n1ceUw0/4iv2xR04up/LYA==

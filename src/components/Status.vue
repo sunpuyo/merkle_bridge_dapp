@@ -23,7 +23,9 @@
               <v-icon>mdi-sack</v-icon>
               <v-icon large>mdi-bank-transfer-in</v-icon>
               <br />
-              <span class="display-1 font-weight-bold lime--text blinking">{{underVerifyAmount}}</span>
+              <span
+                :class="(underVerifyAmount !== '0' ? 'blinking': '') + ' display-1 font-weight-bold lime--text'"
+              >{{underVerifyAmount}}</span>
               <br />
               <span class="subtitle-1 grey--text">Erc20 Aergo</span>
               <v-divider class="mx-4"></v-divider>
@@ -53,17 +55,13 @@
             </v-card>
           </v-col>
         </v-row>
-        <v-row>
-          <v-col align="center">
-            <v-btn
-              color="primary"
-              :disabled="(valid === false || verifiedAmount === '-' || verifiedAmount === '0')"
-              @click="clickNext"
-            >Continue</v-btn>
-            <v-btn text @click="clickBack">Back</v-btn>
-          </v-col>
-        </v-row>
       </v-container>
+      <v-btn
+        color="primary"
+        :disabled="(valid === false || verifiedAmount === '-' || verifiedAmount === '0')"
+        @click="clickNext"
+      >Continue</v-btn>
+      <v-btn text @click="clickBack">Back</v-btn>
     </v-form>
   </div>
 </template>
@@ -152,8 +150,6 @@ export default {
             results[1].tAnchor +
             results[1].tFinal -
             results[1].bestHeight;
-
-            
         })
         .catch(errs => {
           if (errs[0]) {

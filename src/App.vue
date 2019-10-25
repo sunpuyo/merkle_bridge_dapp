@@ -188,7 +188,7 @@ export default {
       const receipt = await eta.increaseApproval(
         web3,
         "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
-        100,
+        2000, 
         "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
         erc20Abi
       );

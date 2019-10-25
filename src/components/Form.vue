@@ -90,9 +90,9 @@
           required
           clearable
           append-outer-icon="mdi-refresh"
-          @click:append-outer="updateDelegateAmount"
+          @click:append-outer="updateApprovedAmount"
         >
-          <span slot="append" v-if="bridge">&nbsp; / {{this.delegatedAmount}} Approved</span>
+          <span slot="append" v-if="bridge">&nbsp; / {{this.approvedAmount}} Approved</span>
         </v-text-field>
       </div>
       <div v-else-if="inout === 'out'">
@@ -100,35 +100,43 @@
         <v-text-field
           v-model="verifiedReceiver"
           :rules="[validateReceiver]"
-          label="To Address"
+          :label="'To Address (' + toBridge.net.label + ')'"
           required
           disabled
         ></v-text-field>
-        <v-text-field v-model="verifiedAmount" label="Amount" required disabled>
-          <span slot="append" v-if="bridge">{{bridge.asset.label}}</span>
+        <v-text-field
+          v-model="verifiedAmountWithFee"
+          :rules="[validateAmount]"
+          :label="'Amount (' + bridge.asset.label +')'"
+          required
+          disabled
+          :class="verifiedAmountWithFee <= 0 ? 'errored--disable-textfield' : ''"
+        >
+          <span
+            slot="append"
+            v-if="bridge && (verifiedAmountWithFee !== verifiedAmount)"
+            class="blinking"
+          >(Operator Fee is Applied)</span>
         </v-text-field>
       </div>
     </v-form>
-    <v-btn
-      color="primary"
-      :loading="loading"
-      :disabled="valid === false"
-      @click="clickSend"
-    >Send {{this.optype}} Tx</v-btn>
+    <v-btn color="primary" :disabled="valid === false" @click="clickSend">Send {{this.optype}} Tx</v-btn>
     <v-btn text @click="clickBack">Back</v-btn>
 
     <!-- result dialog -->
     <v-row justify="center">
-      <v-dialog v-model="dialog.open" max-width="290">
+      <v-dialog persistent v-model="dialog.open" max-width="290">
         <v-card>
-          <v-card-title v-if="dialog.success" class="headline">
-            <span v-if="dialog.success">Success</span>
-            <span v-else>Fail</span>
-          </v-card-title>
+          <v-card-title class="headline">{{dialog.status}}</v-card-title>
           <v-card-text>{{dialog.message}}</v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="green darken-1" text @click="clickDialogOk">Ok</v-btn>
+            <v-btn
+              :loading="dialog.status===this.WAIT"
+              color="green darken-1"
+              text
+              @click="clickDialogOk"
+            >Ok</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -158,18 +166,29 @@ export default {
     valid: false,
     receiver: "",
     amount: "",
-    delegatedAmount: 0,
+    approvedAmount: 0,
     nextVerify: 100,
     nextVerifyRules: [],
     isTimeOk: true,
-    loading: false,
+
     dialog: {
       open: false,
-      success: false,
+      status: null,
       message: ""
     }
   }),
+  created() {
+    this.WAIT = "WAIT CONFIRM";
+    this.SUCCESS = "SUCCESS";
+    this.FAIL = "FAIL";
+  },
   computed: {
+    verifiedAmountWithFee: function() {
+      if (this.wallet.isLogin && this.receiver !== this.wallet.address) {
+        return this.verifiedAmount - 1000; //TODO get fee
+      }
+      return this.verifiedAmount;
+    },
     inout: function() {
       if (
         this.optype === "burn" ||
@@ -272,61 +291,34 @@ export default {
     }
   },
   methods: {
-    /*handleResult(receipt) {
-      this.loading = true;
-
-      receipt
-        .then(response => {
-          const hash = response.transactionHash
-            ? response.transactionHash
-            : response.hash;
-          this.dialog.open = true;
-          this.dialog.success = true;
-          this.dialog.message = hash;
-          this.loading = false;
-
-          return hash;
-        })
-        .catch(err => {
-          this.dialog.open = true;
-          this.dialog.success = false;
-          this.dialog.message = err;
-          this.loading = false;
-
-          return null;
-        });
-    },*/
     async handleResult(receipt) {
-      this.loading = true;
+      this.dialog.status = this.WAIT;
+      this.dialog.message = "wait tx confirm TODO";
+      this.dialog.open = true;
       try {
         const response = await receipt;
 
-        const hash = response.transactionHash
-          ? response.transactionHash
-          : response.hash;
-        this.dialog.open = true;
-        this.dialog.success = true;
-        this.dialog.message = hash;
-        this.loading = false;
+       // const hash = response.transactionHash
+        //  ? response.transactionHash //ethereum
+         // : response.hash; // aergo
+        this.dialog.status = this.SUCCESS;
+        this.dialog.message = JSON.stringify(response);
+        //ether: blockHash, blockNumber
         /* eslint-disable */
         console.log(response);
-
-        return hash;
       } catch (err) {
-        this.dialog.open = true;
-        this.dialog.success = false;
+        this.dialog.status = this.FAIL;
         this.dialog.message = err;
-        this.loading = false;
         /* eslint-disable */
         console.log(err);
-
-        return null;
       }
     },
     async clickSend() {
       if (this.$refs.form.validate()) {
         if (this.optype === "lock") {
+          // wait until transaction finished
           await this.handleResult(
+            // send lock request to ethereum
             ethToAergo.lock(
               web3,
               this.receiver,
@@ -354,18 +346,31 @@ export default {
           );
 
           builtTx.to = this.toBridge.contract.id;
-          console.log(builtTx);
           builtTx.payload_json = JSON.parse(builtTx.payload);
           delete builtTx.payload;
 
-          const txHash = await this.handleResult(
+          await this.handleResult(
             new Promise((resolve, reject) => {
               try {
                 window.addEventListener(
                   "AERGO_SEND_TX_RESULT",
                   event => {
-                    console.log("EVNETD", event.detail);
-                    resolve(event.detail);
+                   setTimeout(async () => {
+                      try{
+                      const receipt = await herajs.getTransactionReceipt(event.detail.hash);
+                      resolve(receipt);
+                      } catch(err){
+                        console.log(err);
+                        reject(err);
+                        
+                      }
+                    }, 100);
+                    
+                   /* settimeout 없이 안되나?
+                   async () => {
+                   const receipt = await herajs.getTransactionReceipt(event.detail.hash);
+                      resolve(receipt);
+                   }*/
                   },
                   { once: true }
                 );
@@ -380,9 +385,6 @@ export default {
               }
             })
           );
-          
-          const receipt = await herajs.getTransactionReceipt(txHash);
-          console.log("ret", receipt);
         }
       } else {
         if (!this.wallet.isLogin) {
@@ -397,7 +399,7 @@ export default {
     },
     clickDialogOk() {
       this.dialog.open = false;
-      if (this.dialog.success) {
+      if (this.dialog.status === this.SUCCESS) {
         this.$emit("stepping", "next");
         this.$emit("updateSharedReceiver", this.receiver);
       }
@@ -421,20 +423,20 @@ export default {
     validateAmount(v) {
       if (!v) {
         return "Amount is required";
-      } else if (false === /^\d+(\.?\d*)$/.test(v)) {
-        return "Amount must be real number";
       } else if (parseFloat(v) <= 0) {
         return "Amount must be bigger than 0";
-      } else if (parseFloat(v) > this.delegatedAmount) {
+      } else if (false === /^\d+(\.?\d*)$/.test(v)) {
+        return "Amount must be real number";
+      } else if (this.inout === "in" && parseFloat(v) > this.approvedAmount) {
         return (
-          "Delegated Asset Amount is Insufficient (Current Approval = " +
-          this.delegatedAmount +
+          "Approved Asset Amount is Insufficient (Current Approval = " +
+          this.approvedAmount +
           ")"
         );
       }
       return true;
     },
-    updateDelegateAmount() {
+    updateApprovedAmount() {
       if (this.bridge && this.inout === "in" && this.wallet.isLogin) {
         if (this.fromBridge.asset.type === "erc20") {
           // define contract
@@ -446,25 +448,24 @@ export default {
           assetContract.methods
             .allowance(this.wallet.address, this.fromBridge.contract.id)
             .call()
-            .then(delegated => {
-              this.delegatedAmount = delegated;
+            .then(approved => {
+              this.approvedAmount = approved;
             });
         } else {
           //TODO
         }
 
-        this.delegatedAmount = "?";
+        this.approvedAmount = "?";
       }
 
-      this.delegatedAmount = "?";
+      this.approvedAmount = "?";
     }
   },
 
   watch: {
-    // this updates delegated amount
+    // this updates approved amount
     "wallet.address": function() {
-      console.log("refresh delegated amount", this.wallet);
-      this.updateDelegateAmount();
+      this.updateApprovedAmount();
     }
   }
 };
