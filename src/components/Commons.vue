@@ -1246,7 +1246,10 @@ export const defaultBridges = [
         endpoint: "http://127.0.0.1:7845",
         scan: ""
       },
-      contract: { id: "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw", abi: aergoBridgeAbi },
+      contract: {
+        id: "AmgQqVWX3JADRBEVkVCM4CyWdoeXuumeYGGJJxEeoAukRC26hxmw",
+        abi: aergoBridgeAbi
+      },
       asset: {
         label: "Native Aergo",
         type: assetType.native,
@@ -1264,7 +1267,10 @@ export const defaultBridges = [
         endpoint: "http://127.0.0.1:3000",
         scan: "https://testnet.aergoscan.io/account/"
       },
-      contract: { id: "AmfzMkaFchxxqg39mcSMkj1rnnBtUZUipDhLBi2H3ewDReJjzLGz", abi: aergoBridgeAbi },
+      contract: {
+        id: "AmfzMkaFchxxqg39mcSMkj1rnnBtUZUipDhLBi2H3ewDReJjzLGz",
+        abi: aergoBridgeAbi
+      },
       asset: {
         label: "native aergo",
         type: assetType.native,
@@ -1280,7 +1286,10 @@ export const defaultBridges = [
         endpoint: "127.0.0.2:3000",
         scan: "https://ropsten.etherscan.io/address/"
       },
-      contract: { id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9", abi: etherBridgeAbi },
+      contract: {
+        id: "0xef27c1d9b1464e0edbcc69b429b872eb89877bd9",
+        abi: etherBridgeAbi
+      },
       asset: {
         label: "erc20 aergo",
         type: assetType.erc20,
@@ -1350,6 +1359,33 @@ export function validateAddress(netType, address) {
     }
   }
   return "unknown network type " + netType;
+}
+
+export function loadReceivers() {
+  const jsonItems = localStorage.getItem("savedReceivers");
+  if (jsonItems) {
+    return JSON.parse(jsonItems);
+  }
+  return [];
+}
+
+export function saveReceiver(receiver) {
+  let parsedItems = [];
+  const jsonItems = localStorage.getItem("savedReceivers");
+
+  if (jsonItems) {
+     parsedItems = JSON.parse(jsonItems);
+  }
+  //TODO prevent duplicate
+  // push item to first
+  parsedItems.unshift(receiver);
+
+  // remove oldest history item
+  if(parsedItems.length > 5) {
+    parsedItems.pop();
+  }
+
+  localStorage.setItem("savedReceivers", JSON.stringify(parsedItems));
 }
 
 export default {};

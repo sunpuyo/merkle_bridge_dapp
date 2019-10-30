@@ -48,7 +48,6 @@
                 v-bind:aergoaccount="aergoaccount"
                 v-bind:verifiedReceiver="verifiedReceiver"
                 v-bind:verifiedAmount="verifiedAmount"
-                @updateSharedReceiver="updateSharedReceiver"
                 @needLogin="needLogin"
                 @stepping="stepping"
               />
@@ -59,7 +58,6 @@
               <Status
                 v-bind:toBridge="toBridge"
                 v-bind:fromBridge="fromBridge"
-                v-bind:sharedReceiver="sharedReceiver"
                 @stepping="stepping"
                 @update_finalize_info="update_finalize_info"
               />
@@ -74,10 +72,8 @@
                 v-bind:optype="toOpType"
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
-                v-bind:sharedReceiver="sharedReceiver"
                 v-bind:verifiedReceiver="verifiedReceiver"
                 v-bind:verifiedAmount="verifiedAmount"
-                @updateSharedReceiver="updateSharedReceiver"
                 @needLogin="needLogin"
                 @stepping="stepping"
               />
@@ -100,9 +96,6 @@
         </v-stepper>
         TMP increase Approval : {{st}} =
         <v-btn @click="increaseApproval" color="primary">Increase Approval</v-btn>
-
-        <v-text-field v-model="tmpText"> </v-text-field>
-        <v-btn @click="tmpReceipt"> search receipt </v-btn>
       </v-content>
     </v-app>
   </div>
@@ -136,7 +129,6 @@ export default {
     toBridge: null,
     fromOpType: null,
     toOpType: null,
-    sharedReceiver: "",
     verifiedReceiver: "",
     verifiedAmount: 0,
     isLoginNeeded: false,
@@ -168,9 +160,6 @@ export default {
       this.verifiedReceiver = verifiedReceiver;
       this.verifiedAmount = verifiedAmount;
     },
-    updateSharedReceiver(sharedReceiver) {
-      this.sharedReceiver = sharedReceiver;
-    },
     needLogin(isLoginNeeded, isLoginNeededNetType) {
       this.isLoginNeeded = isLoginNeeded;
       this.isLoginNeededNetType = isLoginNeededNetType;
@@ -195,14 +184,6 @@ export default {
       console.log("INCREASE APPROVAL RECEIPT:", receipt);
       this.st = receipt.status;
     },
-    async tmpReceipt() {
-      let herajs = new AergoClient(
-            {},
-            new GrpcWebProvider({ url: "http://127.0.0.1:7845"})
-          );
-      const receipt = await herajs.getTransactionReceipt(this.tmpText);
-          console.log("RECEIPT", receipt);
-    }
   }
 };
 </script>

@@ -71,6 +71,7 @@
         v-model="nextVerify"
         :rules="nextVerifyRules"
         label=" Next Verification Time (Estimated)"
+        prepend-inner-icon="mdi-alarm"
         required
         disabled
         :class="isTimeOk?'':'errored--disable-textfield'"
@@ -80,15 +81,18 @@
           v-model="receiver"
           :rules="[validateReceiver]"
           :label="'To Address (' + toBridge.net.label + ')'"
+          prepend-inner-icon="mdi-account"
           required
           clearable
         ></v-text-field>
+
         <v-text-field
           v-model="amount"
           :rules="[validateAmount]"
           :label="'Amount (' + bridge.asset.label +')'"
           required
           clearable
+          prepend-inner-icon="mdi-currency-usd"
           append-outer-icon="mdi-refresh"
           @click:append-outer="updateApprovedAmount"
         >
@@ -101,6 +105,7 @@
           v-model="verifiedReceiver"
           :rules="[validateReceiver]"
           :label="'To Address (' + toBridge.net.label + ')'"
+          prepend-inner-icon="mdi-account"
           required
           disabled
         ></v-text-field>
@@ -108,6 +113,7 @@
           v-model="verifiedAmountWithFee"
           :rules="[validateAmount]"
           :label="'Amount (' + bridge.asset.label +')'"
+          prepend-inner-icon="mdi-currency-usd"
           required
           disabled
           :class="verifiedAmountWithFee <= 0 ? 'errored--disable-textfield' : ''"
@@ -152,9 +158,9 @@
 </template>
 
 <script>
-import { ethToAergo } from "eth-merkle-bridge-js"; //aergoToEth
+import { ethToAergo, utils } from "eth-merkle-bridge-js"; //aergoToEth
 import { web3 } from "./Web3Loader";
-import { validateAddress } from "./Commons";
+import { validateAddress, saveReceiver } from "./Commons";
 import { AergoClient, GrpcWebProvider } from "@herajs/client";
 
 export default {
@@ -177,7 +183,7 @@ export default {
     nextVerify: 100,
     nextVerifyRules: [],
     isTimeOk: true,
-
+    verifiedAmountWithFee: 0,
     dialog: {
       open: false,
       status: null,
@@ -191,12 +197,6 @@ export default {
     this.FAIL = "FAIL";
   },
   computed: {
-    verifiedAmountWithFee: function() {
-      if (this.wallet.isLogin && this.receiver !== this.wallet.address) {
-        return this.verifiedAmount - 1000; //TODO get fee
-      }
-      return this.verifiedAmount;
-    },
     inout: function() {
       if (
         this.optype === "burn" ||
@@ -367,14 +367,14 @@ export default {
           await this.handleResult(
             new Promise((resolve, reject) => {
               try {
-                let handleCancel = event => {
+                const handleCancel = event => {
                   window.removeEventListener(
                     "AERGO_SEND_TX_RESULT",
                     handleSuccess
                   );
                   reject("User refused the transaction");
                 };
-                let handleSuccess = event => {
+                const handleSuccess = event => {
                   window.removeEventListener(
                     "AERGO_SEND_TX_RESULT_CANCEL",
                     handleCancel
@@ -428,7 +428,8 @@ export default {
       this.dialog.open = false;
       if (this.dialog.status === this.SUCCESS) {
         this.$emit("stepping", "next");
-        this.$emit("updateSharedReceiver", this.receiver);
+        // update localstorage
+        saveReceiver(this.receiver);
       }
     },
     validateReceiver(v) {
@@ -489,13 +490,36 @@ export default {
       }
 
       this.approvedAmount = "?";
+    },
+    async updateUnfreezeFee() {
+      if (        
+        this.receiver !== this.wallet.address &&
+        this.optype === "unfreeze"
+      ) {
+        let herajs = new AergoClient(
+          {},
+          new GrpcWebProvider({ url: this.toBridge.net.endpoint })
+        );
+        const unfreezeFee = await utils.getAergoUnfreezeFee(
+          herajs,
+          this.toBridge.contract.id
+        );
+        console.log(unfreezeFee);
+        this.verifiedAmountWithFee = this.verifiedAmount - unfreezeFee;
+      } else {
+       this.verifiedAmountWithFee = this.verifiedAmount; 
+      }
     }
   },
-
   watch: {
-    // this updates approved amount
-    "wallet.address": function() {
+    "wallet.address": async function() {
+      // this updates approved amount
       this.updateApprovedAmount();
+      // this updates unfreezefee
+      this.updateUnfreezeFee();
+    },
+    verifiedAmount: async function() {
+      this.updateUnfreezeFee();
     }
   }
 };

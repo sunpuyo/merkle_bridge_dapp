@@ -2,18 +2,26 @@
   <div>
     <v-form ref="form" v-model="valid" lazy-validation>
       <v-row class="pa-0 ma-0" align="center">
-        <v-text-field
+        <v-combobox
           v-model="receiver"
           :rules="[validateReceiver]"
-          prepend-inner-icon="mdi-account"
+          :items="loadSuggestItems()"
           label="To Address"
           required
+          hide-no-data
           clearable
-        ></v-text-field>
-        <v-btn color="primary" text @click="receiver = sharedReceiver">Load</v-btn>
+        ></v-combobox>
         <v-btn color="primary" :disabled="valid === false" @click="search">Search</v-btn>
       </v-row>
-      <v-container v-if="verifiedReceiver">
+
+      <v-container v-if="verifiedReceiver" class="py-0">
+        <v-switch
+          v-model="isAutoUpdate"
+          class="ma-0 py-0"
+          dense
+          label="Enable Auto Update (every 10s)"
+          @click="enableAutoUpdate"
+        ></v-switch>
         <v-row class="title">Bridge Status ({{updateTime}})</v-row>
         <v-row class="body-1">{{verifiedReceiver}}</v-row>
         <v-row>
@@ -66,7 +74,7 @@
 </template>
 
 <script>
-import { validateAddress } from "./Commons";
+import { validateAddress, loadReceivers } from "./Commons";
 import { ethToAergo, utils } from "eth-merkle-bridge-js";
 import { AergoClient, GrpcWebProvider } from "@herajs/client";
 import Web3 from "web3";
@@ -76,7 +84,7 @@ export default {
   components: {
     //
   },
-  props: ["fromBridge", "toBridge", "sharedReceiver"],
+  props: ["fromBridge", "toBridge"],
   data: () => ({
     receiver: "",
     receiverRules: [v => !!v || "Address is required"],
@@ -85,13 +93,15 @@ export default {
     underVerifyAmount: "-",
     nextVerifyBlock: "-",
     verifiedReceiver: null,
-    updateTime: null
+    updateTime: null,
+    isAutoUpdate: false,
+    autoUpdateIntervalId: null
   }),
 
   methods: {
     reset() {
       this.verifiedReceiver = null;
-this.verifiedAmount = "-";
+      this.verifiedAmount = "-";
       this.underVerifyAmount = "-";
     },
     clickNext() {
@@ -111,6 +121,15 @@ this.verifiedAmount = "-";
 
       this.$emit("stepping", 1);
     },
+    enableAutoUpdate() {
+      if (this.isAutoUpdate) {
+        this.autoUpdateIntervalId = setInterval(() => {
+          this.search();
+        }, 10000);
+      } else if (this.autoUpdateIntervalId) {
+        clearInterval(this.autoUpdateIntervalId);
+      }
+    },
     validateReceiver(v) {
       if (this.toBridge) {
         return validateAddress(this.toBridge.net.type, v);
@@ -119,7 +138,7 @@ this.verifiedAmount = "-";
       }
     },
     search() {
-      if (this.$refs.form.validate()) {
+      if (this.$refs.form && this.$refs.form.validate()) {
         let herajs = new AergoClient(
           {},
           new GrpcWebProvider({ url: this.toBridge.net.endpoint })
@@ -167,6 +186,9 @@ this.verifiedAmount = "-";
             }
           });
       }
+    },
+    loadSuggestItems() {
+      return loadReceivers();
     }
   }
 };

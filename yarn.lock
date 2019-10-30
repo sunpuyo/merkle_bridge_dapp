@@ -701,7 +701,7 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@herajs/client@^0.13.2":
+"@herajs/client@^0.13.2", "@herajs/client@^0.13.4":
   version "0.13.3"
   resolved "https://registry.yarnpkg.com/@herajs/client/-/client-0.13.3.tgz#45e9cf010bcd78429f701d6c64907451a69a663f"
   integrity sha512-Wgwml256RnbcDbBiv9lbP9vzvmhBQ8pWDdnOvEGbDZFtJnB3rXjJ1LUOHlMFZiK/n1ceUw0/4iv2xR04up/LYA==
@@ -3461,10 +3461,10 @@ eth-lib@0.2.8:
     elliptic "^6.4.0"
     xhr-request-promise "^0.1.2"
 
-eth-merkle-bridge-js@0.1.3:
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/eth-merkle-bridge-js/-/eth-merkle-bridge-js-0.1.3.tgz#a6fa8ca5bc723c8858a59acabe1484267d69daa5"
-  integrity sha512-2Lu4cmHJ1rD3ANEHATrFfs1rH8dQBe75wrzMAg0C4OPuAOBq4ug0GiZ+e3r9ddr7O+iIRuUoKPkBFtqr9VCkHQ==
+eth-merkle-bridge-js@0.1.4:
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/eth-merkle-bridge-js/-/eth-merkle-bridge-js-0.1.4.tgz#686db65ea0b2f10f5e4d48cb9851af7370514e54"
+  integrity sha512-HalX0LezE465qbTTTVoIHNwAKmHdTm7FHRPUk2qWRsTT6oth8rDAHl5HKsOv+HNnavIrrPItyu9c4xad5Fv7TA==
   dependencies:
     "@herajs/client" "^0.13.2"
     bignumber.js "^9.0.0"
