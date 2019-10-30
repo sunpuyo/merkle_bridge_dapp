@@ -129,6 +129,13 @@
         <v-card>
           <v-card-title class="headline">{{dialog.status}}</v-card-title>
           <v-card-text>{{dialog.message}}</v-card-text>
+          <v-card-text>
+            <a
+              v-if="dialog.blockHash"
+              :href="bridge.net.scan + dialog.blockHash"
+              target="_blank"
+            >{{dialog.blockHash}}</a>
+          </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
@@ -174,7 +181,8 @@ export default {
     dialog: {
       open: false,
       status: null,
-      message: ""
+      message: "",
+      blockHash: ""
     }
   }),
   created() {
@@ -293,17 +301,24 @@ export default {
   methods: {
     async handleResult(receipt) {
       this.dialog.status = this.WAIT;
-      this.dialog.message = "wait tx confirm TODO";
+      this.dialog.blockHash = null;
+      this.dialog.message = "Wating a transaction to be confirmed...";
       this.dialog.open = true;
       try {
         const response = await receipt;
 
-       // const hash = response.transactionHash
-        //  ? response.transactionHash //ethereum
-         // : response.hash; // aergo
         this.dialog.status = this.SUCCESS;
-        this.dialog.message = JSON.stringify(response);
-        //ether: blockHash, blockNumber
+        this.dialog.message =
+          "The transaction has been confirmed and included in block; ";
+        /* eslint-disable */
+        console.log(this.bridge.net.type);
+        if (this.bridge.net.type === "aergo") {
+          this.dialog.blockHash = response.blockhash;
+          /* eslint-disable */
+          console.log("New hash", response.blockhash);
+        } else {
+          this.dialog.blockHash = response.blockHash;
+        }
         /* eslint-disable */
         console.log(response);
       } catch (err) {
@@ -352,29 +367,41 @@ export default {
           await this.handleResult(
             new Promise((resolve, reject) => {
               try {
+                let handleCancel = event => {
+                  window.removeEventListener(
+                    "AERGO_SEND_TX_RESULT",
+                    handleSuccess
+                  );
+                  reject("User refused the transaction");
+                };
+                let handleSuccess = event => {
+                  window.removeEventListener(
+                    "AERGO_SEND_TX_RESULT_CANCEL",
+                    handleCancel
+                  );
+                  setTimeout(async () => {
+                    try {
+                      const receipt = await herajs.getTransactionReceipt(
+                        event.detail.hash
+                      );
+                      resolve(receipt);
+                    } catch (err) {
+                      console.log(err);
+                      reject(err);
+                    }
+                  }, 2000);
+                };
+
+                // register event handler
+                window.addEventListener("AERGO_SEND_TX_RESULT", handleSuccess, {
+                  once: true
+                });
                 window.addEventListener(
-                  "AERGO_SEND_TX_RESULT",
-                  event => {
-                   setTimeout(async () => {
-                      try{
-                      const receipt = await herajs.getTransactionReceipt(event.detail.hash);
-                      resolve(receipt);
-                      } catch(err){
-                        console.log(err);
-                        reject(err);
-                        
-                      }
-                    }, 100);
-                    
-                   /* settimeout 없이 안되나?
-                   async () => {
-                   const receipt = await herajs.getTransactionReceipt(event.detail.hash);
-                      resolve(receipt);
-                   }*/
-                  },
+                  "AERGO_SEND_TX_RESULT_CANCEL",
+                  handleCancel,
                   { once: true }
                 );
-
+                // send build tx request
                 window.postMessage({
                   type: "AERGO_REQUEST",
                   action: "SEND_TX",
@@ -438,6 +465,9 @@ export default {
     },
     updateApprovedAmount() {
       if (this.bridge && this.inout === "in" && this.wallet.isLogin) {
+        if (this.$refs.form) {
+          this.$refs.form.resetValidation();
+        }
         if (this.fromBridge.asset.type === "erc20") {
           // define contract
           let assetContract = new web3.eth.Contract(

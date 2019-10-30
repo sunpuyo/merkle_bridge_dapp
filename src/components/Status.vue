@@ -16,7 +16,6 @@
       <v-container v-if="verifiedReceiver">
         <v-row class="title">Bridge Status ({{updateTime}})</v-row>
         <v-row class="body-1">{{verifiedReceiver}}</v-row>
-
         <v-row>
           <v-col cols="5">
             <v-card class="my-2" sm="1">
@@ -90,6 +89,11 @@ export default {
   }),
 
   methods: {
+    reset() {
+      this.verifiedReceiver = null;
+this.verifiedAmount = "-";
+      this.underVerifyAmount = "-";
+    },
     clickNext() {
       if (this.$refs.form.validate()) {
         this.$emit(
@@ -97,11 +101,14 @@ export default {
           this.verifiedReceiver,
           this.verifiedAmount
         );
+        this.reset();
         this.$emit("stepping", "next");
       }
     },
     clickBack() {
+      this.reset();
       this.$refs.form.resetValidation();
+
       this.$emit("stepping", 1);
     },
     validateReceiver(v) {
@@ -112,52 +119,54 @@ export default {
       }
     },
     search() {
-      let herajs = new AergoClient(
-        {},
-        new GrpcWebProvider({ url: this.toBridge.net.endpoint })
-      );
+      if (this.$refs.form.validate()) {
+        let herajs = new AergoClient(
+          {},
+          new GrpcWebProvider({ url: this.toBridge.net.endpoint })
+        );
 
-      let web3Full = new Web3(
-        new Web3.providers.HttpProvider(this.fromBridge.net.endpoint)
-      );
+        let web3Full = new Web3(
+          new Web3.providers.HttpProvider(this.fromBridge.net.endpoint)
+        );
 
-      let withdrawStatuseQuery = ethToAergo.unfreezeable(
-        web3Full,
-        herajs,
-        this.fromBridge.contract.id,
-        this.toBridge.contract.id,
-        this.receiver,
-        this.fromBridge.asset.id
-      );
+        let withdrawStatuseQuery = ethToAergo.unfreezeable(
+          web3Full,
+          herajs,
+          this.fromBridge.contract.id,
+          this.toBridge.contract.id,
+          this.receiver,
+          this.fromBridge.asset.id
+        );
 
-      let anchorStatusQuery = utils.getEthAnchorStatus(
-        web3Full,
-        herajs,
-        this.toBridge.contract.id
-      );
+        let anchorStatusQuery = utils.getEthAnchorStatus(
+          web3Full,
+          herajs,
+          this.toBridge.contract.id
+        );
 
-      Promise.all([withdrawStatuseQuery, anchorStatusQuery])
-        .then(results => {
-          this.updateTime = new Date().toLocaleString();
-          // verified asset info
-          this.verifiedReceiver = this.receiver;
-          this.verifiedAmount = results[0][0];
-          this.underVerifyAmount = results[0][1];
+        Promise.all([withdrawStatuseQuery, anchorStatusQuery])
+          .then(results => {
+            this.updateTime = new Date().toLocaleString();
+            // verified asset info
+            this.verifiedReceiver = this.receiver;
+            this.verifiedAmount = results[0][0];
+            this.underVerifyAmount = results[0][1];
 
-          // expected anchoring block height
-          this.nextVerifyBlock =
-            results[1].lastAnchorHeight +
-            results[1].tAnchor +
-            results[1].tFinal -
-            results[1].bestHeight;
-        })
-        .catch(errs => {
-          if (errs[0]) {
-            alert(errs[0]);
-          } else if (errs[1]) {
-            alert(errs[0]);
-          }
-        });
+            // expected anchoring block height
+            this.nextVerifyBlock =
+              results[1].lastAnchorHeight +
+              results[1].tAnchor +
+              results[1].tFinal -
+              results[1].bestHeight;
+          })
+          .catch(errs => {
+            if (errs[0]) {
+              alert(errs[0]);
+            } else if (errs[1]) {
+              alert(errs[0]);
+            }
+          });
+      }
     }
   }
 };
