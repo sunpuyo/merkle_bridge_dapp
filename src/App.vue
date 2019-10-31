@@ -107,10 +107,10 @@ import BridgeSelect from "./components/BridgeSelect";
 import Form from "./components/Form";
 import Status from "./components/Status";
 import History from "./components/History";
-import { web3 } from "./components/Web3Loader";
-import {  erc20Abi } from "./components/Commons";
+import { web3 } from "./components/common/Web3Loader";
+import { erc20Abi } from "./components/abi/EtherERC20";
 import { ethToAergo as eta } from "eth-merkle-bridge-js";
-import { AergoClient, GrpcWebProvider } from "@herajs/client";
+//import { AergoClient, GrpcWebProvider } from "@herajs/client";
 
 export default {
   name: "App",

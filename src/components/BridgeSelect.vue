@@ -34,9 +34,7 @@
 </template>
 
 <script>
-import {defaultBridges} from './Commons'
-
-
+import {defaultBridges} from "./common/DefaultBridges";
 import BridgeCard from "./BridgeCard";
 
 export default {

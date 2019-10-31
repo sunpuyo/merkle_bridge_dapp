@@ -112,7 +112,7 @@
 </template>
 
 <script>
-import { web3 , updateDefaultAccount} from "./Web3Loader";
+import { web3 , updateDefaultAccount} from "./common/Web3Loader";
 
 export default {
   name: "AccountToolBar",

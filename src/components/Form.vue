@@ -159,8 +159,8 @@
 
 <script>
 import { ethToAergo, utils } from "eth-merkle-bridge-js"; //aergoToEth
-import { web3 } from "./Web3Loader";
-import { validateAddress, saveReceiver } from "./Commons";
+import { web3 } from "./common/Web3Loader";
+import { validateAddress, saveReceiver } from "./common/Utils";
 import { AergoClient, GrpcWebProvider } from "@herajs/client";
 
 export default {

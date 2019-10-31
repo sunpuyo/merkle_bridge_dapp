@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import { validateAddress, loadReceivers } from "./Commons";
+import { validateAddress, loadReceivers } from "./common/Utils";
 import { ethToAergo, utils } from "eth-merkle-bridge-js";
 import { AergoClient, GrpcWebProvider } from "@herajs/client";
 import Web3 from "web3";
