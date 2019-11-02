@@ -95,7 +95,7 @@
           </div>
         </v-stepper>
         TMP increase Approval : {{st}} =
-        <v-btn @click="increaseApproval" color="primary">Increase Approval</v-btn>
+        <v-btn @click="increaseApproval" color="primary">Increase Ether Approval</v-btn>
       </v-content>
     </v-app>
   </div>

@@ -66,16 +66,6 @@
           ></v-img>
         </template>
       </v-text-field>
-
-      <v-text-field
-        v-model="nextVerify"
-        :rules="nextVerifyRules"
-        label=" Next Verification Time (Estimated)"
-        prepend-inner-icon="mdi-alarm"
-        required
-        disabled
-        :class="isTimeOk?'':'errored--disable-textfield'"
-      ></v-text-field>
       <div v-if="inout === 'in'">
         <v-text-field
           v-model="receiver"
@@ -93,10 +83,10 @@
           required
           clearable
           prepend-inner-icon="mdi-currency-usd"
-          append-outer-icon="mdi-refresh"
+          :append-outer-icon="needApproveToken? 'mdi-refresh' : ''"
           @click:append-outer="updateApprovedAmount"
         >
-          <span slot="append" v-if="bridge">&nbsp; / {{this.approvedAmount}} Approved</span>
+          <span slot="append" v-if="needApproveToken">&nbsp; / {{this.approvedAmount}} Approved</span>
         </v-text-field>
       </div>
       <div v-else-if="inout === 'out'">
@@ -158,9 +148,14 @@
 </template>
 
 <script>
-import { ethToAergo, utils } from "eth-merkle-bridge-js"; //aergoToEth
+import { ethToAergo, aergoToEth, utils } from "eth-merkle-bridge-js"; //aergoToEth
 import { web3 } from "./common/Web3Loader";
-import { validateAddress, saveReceiver } from "./common/Utils";
+import {
+  validateAddress,
+  saveReceiver,
+  sendTxToAergoConnect
+} from "./common/Utils";
+import { assetType } from "./common/DefaultBridges";
 import { AergoClient, GrpcWebProvider } from "@herajs/client";
 
 export default {
@@ -180,8 +175,6 @@ export default {
     receiver: "",
     amount: "",
     approvedAmount: 0,
-    nextVerify: 100,
-    nextVerifyRules: [],
     isTimeOk: true,
     verifiedAmountWithFee: 0,
     dialog: {
@@ -212,6 +205,16 @@ export default {
         return "out";
       } else {
         return "";
+      }
+    },
+    needApproveToken: function() {
+      if (
+        this.inout === "in" &&
+        this.fromBridge.asset.type !== assetType.native 
+      ) {
+        return true;
+      } else {
+        return false;
       }
     },
     bridge: function() {
@@ -310,22 +313,14 @@ export default {
         this.dialog.status = this.SUCCESS;
         this.dialog.message =
           "The transaction has been confirmed and included in block; ";
-        /* eslint-disable */
-        console.log(this.bridge.net.type);
         if (this.bridge.net.type === "aergo") {
           this.dialog.blockHash = response.blockhash;
-          /* eslint-disable */
-          console.log("New hash", response.blockhash);
         } else {
           this.dialog.blockHash = response.blockHash;
         }
-        /* eslint-disable */
-        console.log(response);
       } catch (err) {
         this.dialog.status = this.FAIL;
         this.dialog.message = err;
-        /* eslint-disable */
-        console.log(err);
       }
     },
     async clickSend() {
@@ -343,15 +338,30 @@ export default {
               this.fromBridge.contract.abi
             )
           );
-        } else if (this.optype == "unfreeze") {
-          let herajs = new AergoClient(
-            {},
-            new GrpcWebProvider({ url: this.toBridge.net.endpoint })
+        } else if (this.optype === "unlock") {
+          // wait until transaction finished
+          await this.handleResult(
+            // send lock request to ethereum
+            aergoToEth.unlock(
+              web3,
+              new AergoClient(
+                {},
+                new GrpcWebProvider({ url: this.fromBridge.net.endpoint })
+              ),
+              this.toBridge.contract.id,
+              this.toBridge.contract.abi,
+              this.fromBridge.contract.id,
+              this.verifiedReceiver,
+              this.toBridge.asset.id
+            )
           );
-
+        } else if (this.optype == "unfreeze") {
           let builtTx = await ethToAergo.buildUnfreezeTx(
             web3,
-            herajs,
+            new AergoClient(
+              {},
+              new GrpcWebProvider({ url: this.toBridge.net.endpoint })
+            ),
             this.wallet.address,
             this.fromBridge.contract.id,
             this.toBridge.contract.id,
@@ -359,58 +369,27 @@ export default {
             this.verifiedReceiver,
             this.fromBridge.asset.id
           );
-
-          builtTx.to = this.toBridge.contract.id;
-          builtTx.payload_json = JSON.parse(builtTx.payload);
-          delete builtTx.payload;
-
           await this.handleResult(
-            new Promise((resolve, reject) => {
-              try {
-                const handleCancel = event => {
-                  window.removeEventListener(
-                    "AERGO_SEND_TX_RESULT",
-                    handleSuccess
-                  );
-                  reject("User refused the transaction");
-                };
-                const handleSuccess = event => {
-                  window.removeEventListener(
-                    "AERGO_SEND_TX_RESULT_CANCEL",
-                    handleCancel
-                  );
-                  setTimeout(async () => {
-                    try {
-                      const receipt = await herajs.getTransactionReceipt(
-                        event.detail.hash
-                      );
-                      resolve(receipt);
-                    } catch (err) {
-                      console.log(err);
-                      reject(err);
-                    }
-                  }, 2000);
-                };
-
-                // register event handler
-                window.addEventListener("AERGO_SEND_TX_RESULT", handleSuccess, {
-                  once: true
-                });
-                window.addEventListener(
-                  "AERGO_SEND_TX_RESULT_CANCEL",
-                  handleCancel,
-                  { once: true }
-                );
-                // send build tx request
-                window.postMessage({
-                  type: "AERGO_REQUEST",
-                  action: "SEND_TX",
-                  data: builtTx
-                });
-              } catch (err) {
-                reject(err);
-              }
-            })
+            sendTxToAergoConnect(
+              this.toBridge.net.endpoint,
+              this.toBridge.contract.id,
+              builtTx
+            )
+          );
+        } else if (this.optype == "freeze") {
+          let builtTx = await aergoToEth.buildFreezeTx(
+            this.wallet.address,
+            this.amount,
+            this.fromBridge.contract.id,
+            this.fromBridge.contract.abi,
+            this.receiver
+          );
+          await this.handleResult(
+            sendTxToAergoConnect(
+              this.fromBridge.net.endpoint,
+              this.fromBridge.contract.id,
+              builtTx
+            )
           );
         }
       } else {
@@ -455,7 +434,7 @@ export default {
         return "Amount must be bigger than 0";
       } else if (false === /^\d+(\.?\d*)$/.test(v)) {
         return "Amount must be real number";
-      } else if (this.inout === "in" && parseFloat(v) > this.approvedAmount) {
+      } else if (this.needApproveToken && parseFloat(v) > this.approvedAmount) {
         return (
           "Approved Asset Amount is Insufficient (Current Approval = " +
           this.approvedAmount +
@@ -492,8 +471,9 @@ export default {
       this.approvedAmount = "?";
     },
     async updateUnfreezeFee() {
-      if (        
-        this.receiver !== this.wallet.address &&
+      if (
+        this.wallet.isLogin &&
+        this.verifiedReceiver.toUpperCase() !== this.wallet.address.toUpperCase() &&
         this.optype === "unfreeze"
       ) {
         let herajs = new AergoClient(
@@ -504,10 +484,9 @@ export default {
           herajs,
           this.toBridge.contract.id
         );
-        console.log(unfreezeFee);
         this.verifiedAmountWithFee = this.verifiedAmount - unfreezeFee;
       } else {
-       this.verifiedAmountWithFee = this.verifiedAmount; 
+        this.verifiedAmountWithFee = this.verifiedAmount;
       }
     }
   },
@@ -526,14 +505,6 @@ export default {
 </script>
 
 <style>
-/*
-.theme--light.v-messages {
- color: red !important;
-}
-.theme--light.v-input--is-disabled .v-label {
-  color: red !important;
-}
-*/
 .errored--disable-textfield .theme--light.v-messages {
   color: red !important;
 }

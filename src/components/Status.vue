@@ -75,7 +75,7 @@
 
 <script>
 import { validateAddress, loadReceivers } from "./common/Utils";
-import { ethToAergo, utils } from "eth-merkle-bridge-js";
+import { ethToAergo, utils, aergoToEth } from "eth-merkle-bridge-js";
 import { AergoClient, GrpcWebProvider } from "@herajs/client";
 import Web3 from "web3";
 
@@ -139,29 +139,62 @@ export default {
     },
     search() {
       if (this.$refs.form && this.$refs.form.validate()) {
-        let herajs = new AergoClient(
-          {},
-          new GrpcWebProvider({ url: this.toBridge.net.endpoint })
-        );
+        var withdrawStatuseQuery;
+        var anchorStatusQuery;
+        if (
+          this.fromBridge.net.type === "ethereum" &&
+          this.toBridge.net.type === "aergo"
+        ) {
+          let herajs = new AergoClient(
+            {},
+            new GrpcWebProvider({ url: this.toBridge.net.endpoint })
+          );
 
-        let web3Full = new Web3(
-          new Web3.providers.HttpProvider(this.fromBridge.net.endpoint)
-        );
+          let web3Full = new Web3(
+            new Web3.providers.HttpProvider(this.fromBridge.net.endpoint)
+          );
+          withdrawStatuseQuery = ethToAergo.unfreezeable(
+            web3Full,
+            herajs,
+            this.fromBridge.contract.id,
+            this.toBridge.contract.id,
+            this.receiver,
+            this.fromBridge.asset.id
+          );
 
-        let withdrawStatuseQuery = ethToAergo.unfreezeable(
-          web3Full,
-          herajs,
-          this.fromBridge.contract.id,
-          this.toBridge.contract.id,
-          this.receiver,
-          this.fromBridge.asset.id
-        );
+          anchorStatusQuery = utils.getEthAnchorStatus(
+            web3Full,
+            herajs,
+            this.toBridge.contract.id
+          );
+        } else if (
+          this.fromBridge.net.type === "aergo" &&
+          this.toBridge.net.type === "ethereum"
+        ) {
+          let herajs = new AergoClient(
+            {},
+            new GrpcWebProvider({ url: this.fromBridge.net.endpoint })
+          );
 
-        let anchorStatusQuery = utils.getEthAnchorStatus(
-          web3Full,
-          herajs,
-          this.toBridge.contract.id
-        );
+          let web3Full = new Web3(
+            new Web3.providers.HttpProvider(this.toBridge.net.endpoint)
+          );
+
+          withdrawStatuseQuery = aergoToEth.unlockeable(
+            web3Full,
+            herajs,
+            this.toBridge.contract.id,
+            this.fromBridge.contract.id,
+            this.receiver,
+            this.toBridge.asset.id
+          );
+
+          anchorStatusQuery = utils.getAergoAnchorStatus(
+            web3Full,
+            herajs,
+            this.toBridge.contract.id
+          );
+        }
 
         Promise.all([withdrawStatuseQuery, anchorStatusQuery])
           .then(results => {
