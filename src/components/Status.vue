@@ -34,7 +34,7 @@
                 :class="(underVerifyAmount !== '0' ? 'blinking': '') + ' display-1 font-weight-bold lime--text'"
               >{{underVerifyAmount}}</span>
               <br />
-              <span class="subtitle-1 grey--text">Erc20 Aergo</span>
+              <span class="subtitle-1 grey--text">{{fromBridge.asset.label}}</span>
               <v-divider class="mx-4"></v-divider>
               <span class="caption">Under Verification</span>
             </v-card>
@@ -56,7 +56,7 @@
               <br />
               <span class="display-1 font-weight-bold green--text">{{verifiedAmount}}</span>
               <br />
-              <span class="subtitle-1 grey--text">Arc1 Aergo</span>
+              <span class="subtitle-1 grey--text">{{toBridge.asset.label}}</span>
               <v-divider class="mx-4"></v-divider>
               <span class="overline">Verified</span>
             </v-card>
@@ -65,11 +65,32 @@
       </v-container>
       <v-btn
         color="primary"
-        :disabled="(valid === false || verifiedAmount === '-' || verifiedAmount === '0')"
-        @click="clickNext"
+        :disabled="(valid === false || verifiedAmount === '0')"
+        @click="openDialog = true"
       >Continue</v-btn>
       <v-btn text @click="clickBack">Back</v-btn>
     </v-form>
+
+    <!-- warning dialog -->
+    <v-row justify="center">
+      <v-dialog persistent v-model="openDialog" max-width="380">
+        <v-card>
+          <v-card-title class="headline">Caution!</v-card-title>
+          <v-card-text v-if="underVerifyAmount !== '0'">
+            <b>{{underVerifyAmount}}</b> assets are under verification. Only {{verifiedAmount}} verified assets are transfered.
+          </v-card-text>
+          <v-card-text>
+            <b>{{nextVerifyBlock}}</b>
+            next verification block is left. If the next verification time is reached during a next step, a transaction may fail. So leave enough block time to proceed.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="clickDialogOk">Ok</v-btn>
+            <v-btn text @click="clickDialogCancel">Cancel</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
   </div>
 </template>
 
@@ -89,31 +110,35 @@ export default {
     receiver: "",
     receiverRules: [v => !!v || "Address is required"],
     valid: false,
-    verifiedAmount: "-",
-    underVerifyAmount: "-",
-    nextVerifyBlock: "-",
+    verifiedAmount: "0",
+    underVerifyAmount: "0",
+    nextVerifyBlock: "0",
     verifiedReceiver: null,
     updateTime: null,
     isAutoUpdate: false,
-    autoUpdateIntervalId: null
+    autoUpdateIntervalId: null,
+    openDialog: false
   }),
 
   methods: {
     reset() {
       this.verifiedReceiver = null;
-      this.verifiedAmount = "-";
-      this.underVerifyAmount = "-";
+      this.verifiedAmount = "0";
+      this.underVerifyAmount = "0";
     },
-    clickNext() {
-      if (this.$refs.form.validate()) {
-        this.$emit(
-          "update_finalize_info",
-          this.verifiedReceiver,
-          this.verifiedAmount
-        );
-        this.reset();
-        this.$emit("stepping", "next");
-      }
+    clickDialogOk() {
+      this.$emit(
+        "update_finalize_info",
+        this.verifiedReceiver,
+        this.verifiedAmount
+      );
+
+      this.reset();
+      this.openDialog = false;
+      this.$emit("stepping", "next");
+    },
+    clickDialogCancel() {
+      this.openDialog = false;
     },
     clickBack() {
       this.reset();

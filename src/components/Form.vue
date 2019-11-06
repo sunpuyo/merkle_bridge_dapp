@@ -82,12 +82,18 @@
           required
           clearable
           prepend-inner-icon="mdi-currency-usd"
-          :append-outer-icon="needApproveToken? 'mdi-import' : ''"
-          @click:append-outer="clickApproveIcon"
         >
           <span slot="append" v-if="needApproveToken">
             &nbsp; / {{this.approvedAmount}} Approved
-            <v-icon @click="updateApprovedAmount">mdi-refresh</v-icon>
+            <v-tooltip v-model="showApproveTooltip" bottom color="red">
+              <template v-slot:activator="{ on }">
+                <v-btn icon v-on="on">
+                  <v-icon @click="clickApproveIcon">mdi-import</v-icon>
+                </v-btn>
+              </template>
+              <span>Increase Approval</span>
+            </v-tooltip>
+            <v-icon @click="updateApprovedAmount" class="ma-0 pa-0">mdi-refresh</v-icon>
           </span>
         </v-text-field>
       </div>
@@ -215,10 +221,10 @@ export default {
     valid: false,
     receiver: "",
     amount: "",
-    approvedAmount: 0,
-    isTimeOk: true,
     verifiedAmountWithFee: 0,
+    approvedAmount: 0,
     checkApprovedAmount: true,
+    showApproveTooltip: false,
     sendDialog: {
       open: false,
       status: "",
@@ -396,7 +402,7 @@ export default {
           ethToAergo.increaseApproval(
             web3,
             this.fromBridge.contract.id, //spender
-            (this.amount - this.approvedAmount), //necessary amount
+            this.amount - this.approvedAmount, //necessary amount
             this.fromBridge.asset.id, //erc20addr
             this.fromBridge.asset.abi //erc20abi
           ),
@@ -406,9 +412,10 @@ export default {
     },
     clickApproveDialogClose() {
       this.updateApprovedAmount();
-      this.approveDialog.open=false;
+      this.approveDialog.open = false;
     },
     async clickSend() {
+      this.showApproveTooltip = false;
       if (this.$refs.form.validate()) {
         this.sendDialog.status = this.NONE;
         if (this.optype === "lock") {
@@ -493,11 +500,12 @@ export default {
       }
     },
     clickBack() {
+      this.showApproveTooltip = false;
       this.$refs.form.resetValidation();
       this.$emit("needLogin", false, this.bridge.net.type);
       this.$emit("stepping", "prev");
     },
-    clickSendDialogOk() {
+    clickSendDialogOk() { 
       this.sendDialog.open = false;
       if (this.sendDialog.status === this.SUCCESS) {
         this.$emit("stepping", "next");
@@ -522,6 +530,7 @@ export default {
       }
     },
     validateAmount(v) {
+      
       if (!v) {
         return "Amount is required";
       } else if (parseFloat(v) <= 0) {
@@ -533,6 +542,7 @@ export default {
         this.needApproveToken &&
         parseFloat(v) > this.approvedAmount
       ) {
+        this.showApproveTooltip = true;
         return (
           "Approved Asset Amount is Insufficient (Current Approval = " +
           this.approvedAmount +

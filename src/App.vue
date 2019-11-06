@@ -150,8 +150,6 @@ export default {
       this.toOpType = toOpType;
     },
     update_finalize_info(verifiedReceiver, verifiedAmount) {
-      /* eslint-disable no-console */
-      console.log(verifiedReceiver);
       this.verifiedReceiver = verifiedReceiver;
       this.verifiedAmount = verifiedAmount;
     },
