@@ -94,8 +94,7 @@
             <v-btn @click="step=2" color="primary">Transfer Again</v-btn>
           </div>
         </v-stepper>
-        TMP increase Approval : {{st}} =
-        <v-btn @click="increaseApproval" color="primary">Increase Ether Approval</v-btn>
+        
       </v-content>
     </v-app>
   </div>
@@ -107,10 +106,6 @@ import BridgeSelect from "./components/BridgeSelect";
 import Form from "./components/Form";
 import Status from "./components/Status";
 import History from "./components/History";
-import { web3 } from "./components/common/Web3Loader";
-import { erc20Abi } from "./components/abi/EtherERC20";
-import { ethToAergo as eta } from "eth-merkle-bridge-js";
-//import { AergoClient, GrpcWebProvider } from "@herajs/client";
 
 export default {
   name: "App",
@@ -172,18 +167,7 @@ export default {
       } else {
         this.step = step;
       }
-    },
-    async increaseApproval() {
-      const receipt = await eta.increaseApproval(
-        web3,
-        "0x89eD1D1C145F6bF3A7e62d2B8eB0e1Bf15Cb2374",
-        20000, 
-        "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
-        erc20Abi
-      );
-      console.log("INCREASE APPROVAL RECEIPT:", receipt);
-      this.st = receipt.status;
-    },
+    }
   }
 };
 </script>

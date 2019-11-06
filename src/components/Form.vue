@@ -45,7 +45,6 @@
     <!-- display logined wallet info -->
     <v-form ref="form" v-model="valid" lazy-validation>
       <v-text-field
-        ref="textField"
         v-model="wallet.address"
         :label="inout==='in'? 'From Address' : 'Operator Address'"
         :rules="[validateAccount]"
@@ -83,10 +82,13 @@
           required
           clearable
           prepend-inner-icon="mdi-currency-usd"
-          :append-outer-icon="needApproveToken? 'mdi-refresh' : ''"
-          @click:append-outer="updateApprovedAmount"
+          :append-outer-icon="needApproveToken? 'mdi-import' : ''"
+          @click:append-outer="clickApproveIcon"
         >
-          <span slot="append" v-if="needApproveToken">&nbsp; / {{this.approvedAmount}} Approved</span>
+          <span slot="append" v-if="needApproveToken">
+            &nbsp; / {{this.approvedAmount}} Approved
+            <v-icon @click="updateApprovedAmount">mdi-refresh</v-icon>
+          </span>
         </v-text-field>
       </div>
       <div v-else-if="inout === 'out'">
@@ -119,27 +121,66 @@
     <v-btn color="primary" :disabled="valid === false" @click="clickSend">Send {{this.optype}} Tx</v-btn>
     <v-btn text @click="clickBack">Back</v-btn>
 
-    <!-- result dialog -->
+    <!-- send result dialog -->
     <v-row justify="center">
-      <v-dialog persistent v-model="dialog.open" max-width="290">
+      <v-dialog persistent v-model="sendDialog.open" max-width="380">
         <v-card>
-          <v-card-title class="headline">{{dialog.status}}</v-card-title>
-          <v-card-text>{{dialog.message}}</v-card-text>
+          <v-card-title class="headline">Send Tx: {{sendDialog.status}}</v-card-title>
+          <v-card-text>{{sendDialog.message}}</v-card-text>
           <v-card-text>
             <a
-              v-if="dialog.blockHash"
-              :href="bridge.net.scan + dialog.blockHash"
+              v-if="sendDialog.blockHash"
+              :href="bridge.net.scan + sendDialog.blockHash"
               target="_blank"
-            >{{dialog.blockHash}}</a>
+            >{{sendDialog.blockHash}}</a>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
-              :loading="dialog.status===this.WAIT"
-              color="green darken-1"
+              :loading="sendDialog.status===this.WAIT"
+              color="primary"
               text
-              @click="clickDialogOk"
+              @click="clickSendDialogOk"
             >Ok</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
+    <!-- increase approve dialog -->
+    <v-row justify="center">
+      <v-dialog persistent v-model="approveDialog.open" max-width="380">
+        <v-card>
+          <v-card-title>Request Approval: {{approveDialog.status}}</v-card-title>
+          <v-card-text>{{approveDialog.message}}</v-card-text>
+          <v-card-text>
+            <a
+              v-if="approveDialog.blockHash"
+              :href="bridge.net.scan + approveDialog.blockHash"
+              target="_blank"
+            >{{approveDialog.blockHash}}</a>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <div v-if="approveDialog.status===NONE">
+              <v-btn
+                text
+                @click="clickApproveDialogOk"
+                color="primary"
+                :loading="approveDialog.status===this.WAIT"
+              >Send Approve Tx</v-btn>
+              <v-btn
+                text
+                :disabled="approveDialog.status===this.WAIT"
+                @click="approveDialog.open=false"
+              >Cancel</v-btn>
+            </div>
+            <div v-else>
+              <v-btn
+                text
+                :loading="approveDialog.status===this.WAIT"
+                @click="clickApproveDialogClose"
+              >Close</v-btn>
+            </div>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -177,14 +218,22 @@ export default {
     approvedAmount: 0,
     isTimeOk: true,
     verifiedAmountWithFee: 0,
-    dialog: {
+    checkApprovedAmount: true,
+    sendDialog: {
       open: false,
-      status: null,
+      status: "",
+      message: "",
+      blockHash: ""
+    },
+    approveDialog: {
+      open: false,
+      status: "",
       message: "",
       blockHash: ""
     }
   }),
   created() {
+    this.NONE = "";
     this.WAIT = "WAIT CONFIRM";
     this.SUCCESS = "SUCCESS";
     this.FAIL = "FAIL";
@@ -210,7 +259,7 @@ export default {
     needApproveToken: function() {
       if (
         this.inout === "in" &&
-        this.fromBridge.asset.type !== assetType.native 
+        this.fromBridge.asset.type !== assetType.native
       ) {
         return true;
       } else {
@@ -302,32 +351,70 @@ export default {
     }
   },
   methods: {
-    async handleResult(receipt) {
-      this.dialog.status = this.WAIT;
-      this.dialog.blockHash = null;
-      this.dialog.message = "Wating a transaction to be confirmed...";
-      this.dialog.open = true;
+    async handleResult(dialog, receipt, msg) {
+      dialog.status = this.WAIT;
+      dialog.blockHash = null;
+      dialog.message = msg;
+      dialog.open = true;
       try {
         const response = await receipt;
 
-        this.dialog.status = this.SUCCESS;
-        this.dialog.message =
+        dialog.status = this.SUCCESS;
+        dialog.message =
           "The transaction has been confirmed and included in block; ";
         if (this.bridge.net.type === "aergo") {
-          this.dialog.blockHash = response.blockhash;
+          dialog.blockHash = response.blockhash;
         } else {
-          this.dialog.blockHash = response.blockHash;
+          dialog.blockHash = response.blockHash;
         }
       } catch (err) {
-        this.dialog.status = this.FAIL;
-        this.dialog.message = err;
+        dialog.status = this.FAIL;
+        dialog.message = err;
       }
+    },
+    clickApproveIcon() {
+      this.checkApprovedAmount = false;
+      if (this.$refs.form.validate()) {
+        this.approveDialog.status = this.NONE;
+        this.approveDialog.open = true; //open dialog and ask
+        this.approveDialog.message =
+          "Do you approve that " +
+          (this.amount - this.approvedAmount) +
+          " " +
+          this.fromBridge.asset.label +
+          " is used by bridge contract?";
+      } else if (!this.wallet.isLogin) {
+        this.$emit("needLogin", true, this.bridge.net.type);
+      }
+      this.checkApprovedAmount = true;
+    },
+    async clickApproveDialogOk() {
+      if (this.fromBridge.net.type === "ethereum") {
+        // wait until transaction finished
+        await this.handleResult(
+          this.approveDialog,
+          ethToAergo.increaseApproval(
+            web3,
+            this.fromBridge.contract.id, //spender
+            (this.amount - this.approvedAmount), //necessary amount
+            this.fromBridge.asset.id, //erc20addr
+            this.fromBridge.asset.abi //erc20abi
+          ),
+          "wating approve tx confirm. you can check a tx in the wallet."
+        );
+      }
+    },
+    clickApproveDialogClose() {
+      this.updateApprovedAmount();
+      this.approveDialog.open=false;
     },
     async clickSend() {
       if (this.$refs.form.validate()) {
+        this.sendDialog.status = this.NONE;
         if (this.optype === "lock") {
           // wait until transaction finished
           await this.handleResult(
+            this.sendDialog,
             // send lock request to ethereum
             ethToAergo.lock(
               web3,
@@ -336,11 +423,13 @@ export default {
               this.amount,
               this.fromBridge.contract.id,
               this.fromBridge.contract.abi
-            )
+            ),
+            "lock tx description"
           );
         } else if (this.optype === "unlock") {
           // wait until transaction finished
           await this.handleResult(
+            this.sendDialog,
             // send lock request to ethereum
             aergoToEth.unlock(
               web3,
@@ -353,7 +442,8 @@ export default {
               this.fromBridge.contract.id,
               this.verifiedReceiver,
               this.toBridge.asset.id
-            )
+            ),
+            "unlock tx description"
           );
         } else if (this.optype == "unfreeze") {
           let builtTx = await ethToAergo.buildUnfreezeTx(
@@ -370,11 +460,13 @@ export default {
             this.fromBridge.asset.id
           );
           await this.handleResult(
+            this.sendDialog,
             sendTxToAergoConnect(
               this.toBridge.net.endpoint,
               this.toBridge.contract.id,
               builtTx
-            )
+            ),
+            "unfreeze description"
           );
         } else if (this.optype == "freeze") {
           let builtTx = await aergoToEth.buildFreezeTx(
@@ -385,11 +477,13 @@ export default {
             this.receiver
           );
           await this.handleResult(
+            this.sendDialog,
             sendTxToAergoConnect(
               this.fromBridge.net.endpoint,
               this.fromBridge.contract.id,
               builtTx
-            )
+            ),
+            "freeze description"
           );
         }
       } else {
@@ -403,9 +497,9 @@ export default {
       this.$emit("needLogin", false, this.bridge.net.type);
       this.$emit("stepping", "prev");
     },
-    clickDialogOk() {
-      this.dialog.open = false;
-      if (this.dialog.status === this.SUCCESS) {
+    clickSendDialogOk() {
+      this.sendDialog.open = false;
+      if (this.sendDialog.status === this.SUCCESS) {
         this.$emit("stepping", "next");
         // update localstorage
         saveReceiver(this.receiver);
@@ -434,7 +528,11 @@ export default {
         return "Amount must be bigger than 0";
       } else if (false === /^\d+(\.?\d*)$/.test(v)) {
         return "Amount must be real number";
-      } else if (this.needApproveToken && parseFloat(v) > this.approvedAmount) {
+      } else if (
+        this.checkApprovedAmount &&
+        this.needApproveToken &&
+        parseFloat(v) > this.approvedAmount
+      ) {
         return (
           "Approved Asset Amount is Insufficient (Current Approval = " +
           this.approvedAmount +
@@ -473,7 +571,8 @@ export default {
     async updateUnfreezeFee() {
       if (
         this.wallet.isLogin &&
-        this.verifiedReceiver.toUpperCase() !== this.wallet.address.toUpperCase() &&
+        this.verifiedReceiver.toUpperCase() !==
+          this.wallet.address.toUpperCase() &&
         this.optype === "unfreeze"
       ) {
         let herajs = new AergoClient(
