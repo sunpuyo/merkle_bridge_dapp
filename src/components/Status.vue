@@ -31,8 +31,8 @@
               <v-icon large>mdi-bank-transfer-in</v-icon>
               <br />
               <span
-                :class="(underVerifyAmount !== '0' ? 'blinking': '') + ' display-1 font-weight-bold lime--text'"
-              >{{underVerifyAmount}}</span>
+                :class="(underVerifyAmountDecimalStr !== '0' ? 'blinking': '') + ' display-1 font-weight-bold lime--text'"
+              >{{underVerifyAmountDecimalStr}}</span>
               <br />
               <span class="subtitle-1 grey--text">{{fromBridge.asset.label}}</span>
               <v-divider class="mx-4"></v-divider>
@@ -54,7 +54,7 @@
             <v-card class="my-2" sm="1">
               <v-icon large>mdi-weather-cloudy-arrow-right</v-icon>
               <br />
-              <span class="display-1 font-weight-bold green--text">{{verifiedAmount}}</span>
+              <span class="display-1 font-weight-bold green--text">{{verifiedAmountDecimalStr}}</span>
               <br />
               <span class="subtitle-1 grey--text">{{toBridge.asset.label}}</span>
               <v-divider class="mx-4"></v-divider>
@@ -65,7 +65,7 @@
       </v-container>
       <v-btn
         color="primary"
-        :disabled="(valid === false || verifiedAmount === '0')"
+        :disabled="(valid === false || verifiedAmountDecimalStr === '0')"
         @click="openDialog = true"
       >Continue</v-btn>
       <v-btn text @click="clickBack">Back</v-btn>
@@ -76,8 +76,8 @@
       <v-dialog persistent v-model="openDialog" max-width="380">
         <v-card>
           <v-card-title class="headline">Caution!</v-card-title>
-          <v-card-text v-if="underVerifyAmount !== '0'">
-            <b>{{underVerifyAmount}}</b> assets are under verification. Only {{verifiedAmount}} verified assets are transfered.
+          <v-card-text v-if="underVerifyAmountDecimalStr !== '0'">
+            <b>{{underVerifyAmountDecimalStr}}</b> assets are under verification. Only {{verifiedAmountDecimalStr}} verified assets are transfered.
           </v-card-text>
           <v-card-text>
             <b>{{nextVerifyBlock}}</b>
@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import { validateAddress, loadReceivers } from "./common/Utils";
+import { validateAddress, loadReceivers, applyDecimals } from "./common/Utils";
 import { ethToAergo, utils, aergoToEth } from "eth-merkle-bridge-js";
 import { AergoClient, GrpcWebProvider } from "@herajs/client";
 import Web3 from "web3";
@@ -110,8 +110,8 @@ export default {
     receiver: "",
     receiverRules: [v => !!v || "Address is required"],
     valid: false,
-    verifiedAmount: "0",
-    underVerifyAmount: "0",
+    verifiedAmountDecimalStr: "0",
+    underVerifyAmountDecimalStr: "0",
     nextVerifyBlock: "0",
     verifiedReceiver: null,
     updateTime: null,
@@ -123,14 +123,14 @@ export default {
   methods: {
     reset() {
       this.verifiedReceiver = null;
-      this.verifiedAmount = "0";
-      this.underVerifyAmount = "0";
+      this.verifiedAmountDecimalStr = "0";
+      this.underVerifyAmountDecimalStr = "0";
     },
     clickDialogOk() {
       this.$emit(
         "update_finalize_info",
         this.verifiedReceiver,
-        this.verifiedAmount
+        this.verifiedAmountDecimalStr
       );
 
       this.reset();
@@ -226,8 +226,8 @@ export default {
             this.updateTime = new Date().toLocaleString();
             // verified asset info
             this.verifiedReceiver = this.receiver;
-            this.verifiedAmount = results[0][0];
-            this.underVerifyAmount = results[0][1];
+            this.verifiedAmountDecimalStr = applyDecimals(results[0][0], this.toBridge.asset.decimals, false);
+            this.underVerifyAmountDecimalStr = applyDecimals(results[0][1], this.fromBridge.asset.decimals, false);
 
             // expected anchoring block height
             this.nextVerifyBlock =

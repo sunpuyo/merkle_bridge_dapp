@@ -76,7 +76,7 @@
         ></v-text-field>
 
         <v-text-field
-          v-model="amount"
+          v-model="amountDecimals"
           :rules="[validateAmount]"
           :label="'Amount (' + bridge.asset.label +')'"
           required
@@ -84,7 +84,7 @@
           prepend-inner-icon="mdi-currency-usd"
         >
           <span slot="append" v-if="needApproveToken">
-            &nbsp; / {{this.approvedAmount}} Approved
+            &nbsp; / {{ approvedAmountDecimalsStr }} Approved
             <v-tooltip v-model="showApproveTooltip" bottom color="red">
               <template v-slot:activator="{ on }">
                 <v-btn icon v-on="on">
@@ -108,19 +108,19 @@
           disabled
         ></v-text-field>
         <v-text-field
-          v-model="verifiedAmountWithFee"
+          v-model="verifiedAmountWithFeeDecimalsStr"
           :rules="[validateAmount]"
           :label="'Amount (' + bridge.asset.label +')'"
           prepend-inner-icon="mdi-currency-usd"
           required
           disabled
-          :class="verifiedAmountWithFee <= 0 ? 'errored--disable-textfield' : ''"
+          :class="verifiedAmountWithFeeDecimalsStr <= 0 ? 'errored--disable-textfield' : ''"
         >
           <span
             slot="append"
-            v-if="bridge && (verifiedAmountWithFee !== verifiedAmount)"
+            v-if="bridge && (verifiedAmountWithFeeDecimalsStr !== verifiedAmountDecimalStr)"
             class="blinking"
-          >(Operator Fee is Applied)</span>
+          > (Operator Fee is Applied)</span>
         </v-text-field>
       </div>
     </v-form>
@@ -200,10 +200,11 @@ import { web3 } from "./common/Web3Loader";
 import {
   validateAddress,
   saveReceiver,
-  sendTxToAergoConnect
+  sendTxToAergoConnect,
+  applyDecimals
 } from "./common/Utils";
 import { assetType } from "./common/DefaultBridges";
-import { AergoClient, GrpcWebProvider } from "@herajs/client";
+import { AergoClient, GrpcWebProvider, Amount } from "@herajs/client";
 
 export default {
   name: "Form",
@@ -214,15 +215,15 @@ export default {
     "etheraccount",
     "aergoaccount",
     "verifiedReceiver",
-    "verifiedAmount"
+    "verifiedAmountDecimalStr"
   ],
   components: {},
   data: () => ({
     valid: false,
     receiver: "",
-    amount: "",
-    verifiedAmountWithFee: 0,
-    approvedAmount: 0,
+    amountDecimals: "",
+    verifiedAmountWithFeeDecimalsStr: "0",
+    approvedAmount: new Amount(0),
     checkApprovedAmount: true,
     showApproveTooltip: false,
     sendDialog: {
@@ -245,6 +246,18 @@ export default {
     this.FAIL = "FAIL";
   },
   computed: {
+    amount: function() {
+      return new Amount(
+        applyDecimals(this.amountDecimals, this.bridge.asset.decimals, true)
+      );
+    },
+    approvedAmountDecimalsStr: function() {
+      return applyDecimals(
+        this.approvedAmount,
+        this.bridge.asset.decimals,
+        false
+      );
+    },
     inout: function() {
       if (
         this.optype === "burn" ||
@@ -385,7 +398,11 @@ export default {
         this.approveDialog.open = true; //open dialog and ask
         this.approveDialog.message =
           "Do you approve that " +
-          (this.amount - this.approvedAmount) +
+          applyDecimals(
+            this.amount.sub(this.approvedAmount),
+            this.bridge.asset.decimals,
+            false
+          ) +
           " " +
           this.fromBridge.asset.label +
           " is used by bridge contract?";
@@ -402,7 +419,7 @@ export default {
           ethToAergo.increaseApproval(
             web3,
             this.fromBridge.contract.id, //spender
-            this.amount - this.approvedAmount, //necessary amount
+            this.amount.sub(this.approvedAmount).formatNumber(), //necessary amount
             this.fromBridge.asset.id, //erc20addr
             this.fromBridge.asset.abi //erc20abi
           ),
@@ -427,7 +444,7 @@ export default {
               web3,
               this.receiver,
               this.fromBridge.asset.id,
-              this.amount,
+              this.amount.formatNumber(),
               this.fromBridge.contract.id,
               this.fromBridge.contract.abi
             ),
@@ -478,7 +495,7 @@ export default {
         } else if (this.optype == "freeze") {
           let builtTx = await aergoToEth.buildFreezeTx(
             this.wallet.address,
-            this.amount,
+            this.amount.formatNumber(),
             this.fromBridge.contract.id,
             this.fromBridge.contract.abi,
             this.receiver
@@ -505,7 +522,7 @@ export default {
       this.$emit("needLogin", false, this.bridge.net.type);
       this.$emit("stepping", "prev");
     },
-    clickSendDialogOk() { 
+    clickSendDialogOk() {
       this.sendDialog.open = false;
       if (this.sendDialog.status === this.SUCCESS) {
         this.$emit("stepping", "next");
@@ -530,22 +547,31 @@ export default {
       }
     },
     validateAmount(v) {
-      
       if (!v) {
         return "Amount is required";
-      } else if (parseFloat(v) <= 0) {
+      } else if (
+        new Amount(applyDecimals(v, this.bridge.asset.decimals, true)).compare(
+          0
+        ) <= 0
+      ) {
         return "Amount must be bigger than 0";
       } else if (false === /^\d+(\.?\d*)$/.test(v)) {
         return "Amount must be real number";
       } else if (
         this.checkApprovedAmount &&
         this.needApproveToken &&
-        parseFloat(v) > this.approvedAmount
+        new Amount(applyDecimals(v, this.bridge.asset.decimals, true)).compare(
+          this.approvedAmount
+        ) > 0 // value must be bigger than already approved amount
       ) {
         this.showApproveTooltip = true;
         return (
           "Approved Asset Amount is Insufficient (Current Approval = " +
-          this.approvedAmount +
+          applyDecimals(
+            this.approvedAmount,
+            this.bridge.asset.decimals,
+            false
+          ) +
           ")"
         );
       }
@@ -567,16 +593,13 @@ export default {
             .allowance(this.wallet.address, this.fromBridge.contract.id)
             .call()
             .then(approved => {
-              this.approvedAmount = approved;
+              this.approvedAmount = new Amount(approved.toString());
             });
         } else {
-          //TODO
+          //TODO for ARC1
+          this.approvedAmount = new Amount(0);
         }
-
-        this.approvedAmount = "?";
       }
-
-      this.approvedAmount = "?";
     },
     async updateUnfreezeFee() {
       if (
@@ -593,9 +616,19 @@ export default {
           herajs,
           this.toBridge.contract.id
         );
-        this.verifiedAmountWithFee = this.verifiedAmount - unfreezeFee;
+        this.verifiedAmountWithFeeDecimalsStr = applyDecimals(
+          new Amount(
+            applyDecimals(
+              new Amount(this.verifiedAmountDecimalStr),
+              this.bridge.asset.decimals,
+              true
+            )
+          ).sub(new Amount(unfreezeFee)),
+          this.bridge.asset.decimals,
+          false
+        );
       } else {
-        this.verifiedAmountWithFee = this.verifiedAmount;
+        this.verifiedAmountWithFeeDecimalsStr = this.verifiedAmountDecimalStr;
       }
     }
   },
@@ -606,7 +639,7 @@ export default {
       // this updates unfreezefee
       this.updateUnfreezeFee();
     },
-    verifiedAmount: async function() {
+    verifiedAmountDecimalStr: async function() {
       this.updateUnfreezeFee();
     }
   }

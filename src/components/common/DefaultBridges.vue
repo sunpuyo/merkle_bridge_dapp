@@ -28,7 +28,8 @@ export const defaultBridges = [
         type: assetType.erc20,
         isPegged: false,
         id: "0xd898383A12CDE0eDF7642F7dD4D7006FdE5c433e",
-        abi: erc20Abi
+        abi: erc20Abi,
+        decimals: 18
       }
     },
     bridge2: {
@@ -47,7 +48,8 @@ export const defaultBridges = [
         label: "Native Aergo",
         type: assetType.native,
         isPegged: false,
-        id: ""
+        id: "",
+        decimals: 18
       }
     }
   },

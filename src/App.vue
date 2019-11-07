@@ -47,7 +47,7 @@
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
                 v-bind:verifiedReceiver="verifiedReceiver"
-                v-bind:verifiedAmount="verifiedAmount"
+                v-bind:verifiedAmountDecimalStr="verifiedAmountDecimalStr"
                 @needLogin="needLogin"
                 @stepping="stepping"
               />
@@ -73,7 +73,7 @@
                 v-bind:etheraccount="etheraccount"
                 v-bind:aergoaccount="aergoaccount"
                 v-bind:verifiedReceiver="verifiedReceiver"
-                v-bind:verifiedAmount="verifiedAmount"
+                v-bind:verifiedAmountDecimalStr="verifiedAmountDecimalStr"
                 @needLogin="needLogin"
                 @stepping="stepping"
               />
@@ -125,7 +125,7 @@ export default {
     fromOpType: null,
     toOpType: null,
     verifiedReceiver: "",
-    verifiedAmount: 0,
+    verifiedAmountDecimalStr: 0,
     isLoginNeeded: false,
     isLoginNeededNetType: "",
     etheraccount: null,
@@ -149,9 +149,9 @@ export default {
       this.fromOpType = fromOpType;
       this.toOpType = toOpType;
     },
-    update_finalize_info(verifiedReceiver, verifiedAmount) {
+    update_finalize_info(verifiedReceiver, verifiedAmountDecimalStr) {
       this.verifiedReceiver = verifiedReceiver;
-      this.verifiedAmount = verifiedAmount;
+      this.verifiedAmountDecimalStr = verifiedAmountDecimalStr;
     },
     needLogin(isLoginNeeded, isLoginNeededNetType) {
       this.isLoginNeeded = isLoginNeeded;

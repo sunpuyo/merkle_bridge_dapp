@@ -701,10 +701,24 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@herajs/client@^0.13.2", "@herajs/client@^0.13.4":
+"@herajs/client@^0.13.2":
   version "0.13.3"
   resolved "https://registry.yarnpkg.com/@herajs/client/-/client-0.13.3.tgz#45e9cf010bcd78429f701d6c64907451a69a663f"
   integrity sha512-Wgwml256RnbcDbBiv9lbP9vzvmhBQ8pWDdnOvEGbDZFtJnB3rXjJ1LUOHlMFZiK/n1ceUw0/4iv2xR04up/LYA==
+  dependencies:
+    "@improbable-eng/grpc-web" "^0.9.1"
+    "@types/google-protobuf" "^3.2.7"
+    bs58 "^4.0.1"
+    bs58check "^2.1.2"
+    google-protobuf "^3.6.0"
+    grpc "^1.13.1"
+    hash.js "^1.1.7"
+    jsbi "^3.0.0"
+
+"@herajs/client@^0.13.4":
+  version "0.15.1"
+  resolved "https://registry.yarnpkg.com/@herajs/client/-/client-0.15.1.tgz#0cb3711ee04f524ab6f69ca7a742678edadcfc47"
+  integrity sha512-mx+FNruvNWGWY9MYejQQjWgOR263Vg4TvlEadUb1zIYuFi4ZZFQ1Bc8kS26Lbn4qF9bbZJyiatgSk0o/lqlqQA==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.1"
     "@types/google-protobuf" "^3.2.7"

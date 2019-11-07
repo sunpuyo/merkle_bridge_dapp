@@ -2,7 +2,7 @@
 import { Address } from "@herajs/client";
 import { web3 } from "./Web3Loader";
 import { utils } from "eth-merkle-bridge-js";
-import { AergoClient, GrpcWebProvider } from "@herajs/client";
+import { AergoClient, GrpcWebProvider, Amount } from "@herajs/client";
 
 export function validateAddress(netType, address) {
   if (!address) {
@@ -51,6 +51,20 @@ export function saveReceiver(receiver) {
   }
 
   localStorage.setItem("savedReceivers", JSON.stringify(parsedItems));
+}
+
+export function applyDecimals(amount, decimals, isPositive) {
+   //convert other types to string
+  if (amount instanceof Amount) {
+    amount = amount.formatNumber();
+  } else if (typeof(amount) === "number") {
+    amount = amount.toString();
+  } 
+  if (isPositive) {
+    return Amount.moveDecimalPoint(amount, parseInt(decimals));
+  } else {
+    return Amount.moveDecimalPoint(amount, -1 * parseInt(decimals));
+  }
 }
 
 export function sendTxToAergoConnect(endpoint, contractID, builtTx) {
