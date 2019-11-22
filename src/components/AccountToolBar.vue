@@ -137,6 +137,10 @@ export default {
 
     // set aergo account event change listener
     window.addEventListener("AERGO_ACTIVE_ACCOUNT", event => {
+      if(event.detail.error) {
+        console.log(event.detail.error)
+        return;
+      }
       this.aergoaccount = event.detail.account;
       this.$emit("login_aergo", event.detail.account);
     });

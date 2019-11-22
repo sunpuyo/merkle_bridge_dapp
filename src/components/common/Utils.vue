@@ -54,12 +54,12 @@ export function saveReceiver(receiver) {
 }
 
 export function applyDecimals(amount, decimals, isPositive) {
-   //convert other types to string
+  //convert other types to string
   if (amount instanceof Amount) {
     amount = amount.formatNumber();
-  } else if (typeof(amount) === "number") {
+  } else if (typeof amount === "number") {
     amount = amount.toString();
-  } 
+  }
   if (isPositive) {
     return Amount.moveDecimalPoint(amount, parseInt(decimals));
   } else {
@@ -76,31 +76,26 @@ export function sendTxToAergoConnect(endpoint, contractID, builtTx) {
 
   return new Promise((resolve, reject) => {
     try {
-      const handleCancel = () => {
-        window.removeEventListener("AERGO_SEND_TX_RESULT", handleSuccess);
-        reject("User refused the transaction");
-      };
-      const handleSuccess = event => {
-        window.removeEventListener("AERGO_SEND_TX_RESULT_CANCEL", handleCancel);
+      // register event handler
+      window.addEventListener("AERGO_SEND_TX_RESULT", (event) => {
         setTimeout(async () => {
           try {
-            const receipt = await herajs.getTransactionReceipt(
-              event.detail.hash
-            );
-            resolve(receipt);
+            if (event.detail.error) {
+              reject(event.detail.error);
+            } else {
+              const receipt = await herajs.getTransactionReceipt(
+                event.detail.hash
+              );
+              resolve(receipt);
+            }
           } catch (err) {
             reject(err);
           }
         }, 2000);
-      };
-
-      // register event handler
-      window.addEventListener("AERGO_SEND_TX_RESULT", handleSuccess, {
+      }, {
         once: true
       });
-      window.addEventListener("AERGO_SEND_TX_RESULT_CANCEL", handleCancel, {
-        once: true
-      });
+      
       // send build tx request
       window.postMessage({
         type: "AERGO_REQUEST",

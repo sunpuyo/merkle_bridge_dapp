@@ -205,7 +205,7 @@ export default {
             new Web3.providers.HttpProvider(this.toBridge.net.endpoint)
           );
 
-          withdrawStatuseQuery = aergoToEth.unlockeable(
+          withdrawStatuseQuery = aergoToEth.unlockable(
             web3Full,
             herajs,
             this.toBridge.contract.id,
