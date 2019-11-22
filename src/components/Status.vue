@@ -178,7 +178,7 @@ export default {
           let web3Full = new Web3(
             new Web3.providers.HttpProvider(this.fromBridge.net.endpoint)
           );
-          withdrawStatuseQuery = ethToAergo.unfreezeable(
+          withdrawStatuseQuery = ethToAergo.unfreezable(
             web3Full,
             herajs,
             this.fromBridge.contract.id,
