@@ -24,21 +24,20 @@
         @open_drawer="open_drawer"
         @stepping="stepping"
       />
-      <v-content class="pa-0">
-        최상단에 뭔가 머클브릿지에 대한 간략한 설명과 사용법을 적어야 할거 같다.
-        아니면 다른 상세 메인 페이지를 탭으로 제공하는 것도 방법일듯.
-        FIXXME
+      <v-content class="pa-0" align-center style="min-width: 400px; max-width: 1000px">
         <v-stepper v-model="step" vertical>
           <v-stepper-step :complete="step > 1" step="1">
             Select a bridge
-            <small>TODO Summarize if needed</small>
+            <small>Choose paired assets, transfer direction and steps</small>
           </v-stepper-step>
           <v-stepper-content step="1">
             <BridgeSelect @select_bridge="select_bridge" @stepping="stepping" />
           </v-stepper-content>
 
           <div v-if="menu==='transfer'">
-            <v-stepper-step :complete="step > 2" step="2">Send an asset</v-stepper-step>
+            <v-stepper-step :complete="step > 2" step="2">Send an asset
+              <small>On source network, transfer assets to the Merkle Bridge</small>
+            </v-stepper-step>
             <v-stepper-content step="2">
               <Form
                 v-bind:fromBridge="fromBridge"
@@ -53,7 +52,9 @@
               />
             </v-stepper-content>
 
-            <v-stepper-step :complete="step > 3" step="3">Wating a verification</v-stepper-step>
+            <v-stepper-step :complete="step > 3" step="3">Wating a verification
+              <small>Check the source network's transmission state on the target network's Merkle Bridge</small>
+            </v-stepper-step>
             <v-stepper-content step="3">
               <Status
                 v-bind:toBridge="toBridge"
@@ -64,7 +65,9 @@
               <br />
             </v-stepper-content>
 
-            <v-stepper-step :complete="step > 4" step="4">Receive the asset</v-stepper-step>
+            <v-stepper-step :complete="step > 4" step="4">Receive the asset
+              <small>On target network, withdraw assets from the Merkle Bridge </small>
+            </v-stepper-step>
             <v-stepper-content step="4">
               <Form
                 v-bind:fromBridge="fromBridge"
