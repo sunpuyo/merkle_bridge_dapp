@@ -237,11 +237,9 @@ export default {
               results[1].bestHeight;
           })
           .catch(errs => {
-            if (errs[0]) {
-              alert(errs[0]);
-            } else if (errs[1]) {
-              alert(errs[0]);
-            }
+            alert(errs);
+            // eslint-disable-next-line
+            console.error(errs)
           });
       }
     },
