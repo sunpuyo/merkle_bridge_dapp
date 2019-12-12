@@ -715,7 +715,7 @@
     hash.js "^1.1.7"
     jsbi "^3.0.0"
 
-"@herajs/client@^0.13.4":
+"@herajs/client@^0.16.4":
   version "0.16.4"
   resolved "https://registry.yarnpkg.com/@herajs/client/-/client-0.16.4.tgz#99a81b3360a7cc6019d67e51e0443a2547c37a40"
   integrity sha512-7bvdk+7K+G/zB9vRm1S6+fMtdIwoGofoyS4UYTskJqVLGbMWk4NSHg9ojMddDSSMmOIvmgYPXRQbF2ZAxhBmJg==
